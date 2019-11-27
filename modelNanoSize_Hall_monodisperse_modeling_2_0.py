@@ -42,10 +42,16 @@ from matplotlib import rcParams
 import pandas as pd
 import cv2
 import PyMieScatt as ps
-import xarray as xr
 import datetime
 from scipy.interpolate import interp1d
+import sys
 
+if sys.version_info >= (3, 0):
+    import xarray as xr
+    storeXarray=True
+else:
+    storeXarray=False
+    
 XYZtolRGB=np.array([[3.2406255,-1.537208,-0.4986286],[-0.9689307,1.8757561,0.0415175],[0.0557101,-0.2040211,1.0569959]])
 
 def single_gauss_func(x, a, x0, sigma):
@@ -165,8 +171,10 @@ colorDataMono=[]
 colorDataPoly=[]
 bextArray=np.zeros((waves.shape[0]))
 sizeDistributionDiameterBins=np.arange(20.0,200.0,1)
-mieEfficenciesDataArray=xr.DataArray(dims=('ri', 'diameter','wavelength','mie'),coords={'ri': ris,'diameter': diameters,'wavelength':waves,'mie':['qext','qsca','qabs','g','qpr','qback','qratio']})
-
+if storeXarray:
+    mieEfficenciesDataArray=xr.DataArray(dims=('ri', 'diameter','wavelength','mie'),coords={'ri': ris,'diameter': diameters,'wavelength':waves,'mie':['qext','qsca','qabs','g','qpr','qback','qratio']})
+else:
+    mieEfficencies=[]
 spectCount=0
 for diameter,diameter_stdev in zip(diameters,diameter_stdevs):
     for ri in ris: 
@@ -175,13 +183,17 @@ for diameter,diameter_stdev in zip(diameters,diameter_stdevs):
         lmax=waves[(waves>450) & (waves<800)][np.argmax(qext[(waves>450) & (waves<800)])]
         RGB, HSV, LAB, XYZ, rgb, rat, RGBg=absorbanceToTristim(waves,qext/scaleFactorMono,Yr,gammaFlag=True)
         colorDataMono.append({'lmax':lmax,'ri': ri,'diameter': diameter,'R':RGB[0],'G':RGB[1],'B':RGB[2],'H':HSV[0],'S':HSV[1],'V':HSV[2],'L*':LAB[0],'a*':LAB[1],'b*':LAB[2],'r':rgb[0],'g':rgb[1],'b':rgb[2],'R/G':rat[0],'R/B':rat[1],'G/B':rat[2],'Rg':RGBg[0],'Gg':RGBg[1],'Bg':RGBg[2]})
-        mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qext')]=qext/scaleFactorMono
-        mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qsca')]=qsca
-        mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qabs')]=qabs
-        mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='g')]=g
-        mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qpr')]=qpr
-        mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qback')]=qback
-        mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qratio')]=qratio
+        if storeXarray:
+            mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qext')]=qext
+            mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qsca')]=qsca
+            mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qabs')]=qabs
+            mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='g')]=g
+            mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qpr')]=qpr
+            mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qback')]=qback
+            mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qratio')]=qratio
+        else:
+            mieEfficencies.append({'ri': ri,'diameter': diameter,'qext':qext,'qsca': qsca,'qabs': qabs})
+
 #        sizeDistribution=single_gauss_func(sizeDistributionDiameterBins, 10, diameter, diameter_stdev)
 #        for index in range(waves.shape[0]):
 #            bext, bsca, babs, G, bpr, bback, bratio=ps.Mie_SD(m[index], waves[index], sizeDistributionDiameterBins,sizeDistribution,nMedium=ri, asDict=False)
@@ -192,6 +204,8 @@ for diameter,diameter_stdev in zip(diameters,diameter_stdevs):
 
 dfColorMono=pd.DataFrame(colorDataMono)
 dfColorMono=dfColorMono[['ri','diameter','R','G','B','H','S','V','L*','a*','b*','r','g','b','R/G','R/B','G/B','Rg','Gg','Bg','lmax']]
+if not(storeXarray):
+    dfmieEfficencies=pd.DataFrame(mieEfficencies)
 
 #now = datetime.datetime.now()
 #writer = pd.ExcelWriter('ModelingSpectra'+now.strftime("%m-%d-%Yat%H-%M")+'.xlsx')
@@ -257,8 +271,11 @@ ris=np.array([1.33])
 diameters=np.array([115,100,80,60,35])
 mie='qext'
 for diameter in diameters:
-    for ri in ris: 
-        signal= mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie=mie)].values
+    for ri in ris:
+        if storeXarray:
+            signal= mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie=mie)].values
+        else:
+            signal= dfmieEfficencies[(dfmieEfficencies['ri']==ri) & (dfmieEfficencies['diameter']==diameter)][mie].values[0]
         dfBool=(dfColorMono['diameter']==diameter) & (dfColorMono['ri']==ri)
         color=dfColorMono[dfBool][['Rg','Gg','Bg']].values
         ext.plot(waves,signal,label=str(diameter)+" nm",color=color[0,:])
@@ -270,5 +287,5 @@ ext.set_xticks(np.array([400,500,600,700,800]))
 ext.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 #ext.set_ylim([0, 0.5])
 #ext.set_yticks(np.array([0,.1,.2,.3,.4,.5]))
-ext.set_yticklabels(np.array([0,.1,.2,.3,.4,.5]),fontsize = fontSizeLarge)
+#ext.set_yticklabels(np.array([0,.1,.2,.3,.4,.5]),fontsize = fontSizeLarge)
 figExt.savefig('Au_Ext.png', dpi=600)
