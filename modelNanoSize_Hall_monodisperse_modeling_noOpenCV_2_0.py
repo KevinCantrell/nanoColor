@@ -46,6 +46,9 @@ import datetime
 from scipy.interpolate import interp1d
 import sys
 
+figureDPI=72
+savefigureFlag=True
+
 if sys.version_info >= (3, 0):
     import xarray as xr
     storeXarray=True
@@ -268,7 +271,8 @@ cie.set_yticks(np.array([0,0.5,1,1.5,2]))
 cie.set_yticklabels(np.array([0,0.5,1,1.5,2]),fontsize = fontSizeLarge)
 cie.set_xticks(np.array([400,500,600,700,800]))
 cie.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
-figColor.savefig('CIE_XYZ.png', dpi=600)
+if savefigureFlag:
+    figColor.savefig('CIE_XYZ.png', dpi=figureDPI)
 
 figIll,ill=plt.subplots(1,1,figsize=(6,6))
 ill.plot(waves,illum,'k',label="D65 illuminant")
@@ -281,7 +285,8 @@ ill.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 ill.set_ylim([0, 120])
 ill.set_yticks(np.array([0,25,50,75,100]))
 ill.set_yticklabels(np.array([0,25,50,75,100]),fontsize = fontSizeLarge)
-figIll.savefig('D65.png', dpi=600)
+if savefigureFlag:
+    figIll.savefig('D65.png', dpi=figureDPI)
 
 figRI,opt=plt.subplots(1,1,figsize=(6,6))
 opt.plot(waves,fSplineN(waves),'-k',label="refractive index (n)")
@@ -295,7 +300,8 @@ opt.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 opt.set_ylim([0, 5.2])
 opt.set_yticks(np.array([0,1,2,3,4,5]))
 opt.set_yticklabels(np.array([0,1,2,3,4,5]),fontsize = fontSizeLarge)
-figRI.savefig('RI.png', dpi=600)
+if savefigureFlag:
+    figRI.savefig('RI.png', dpi=figureDPI)
 
 figExt,ext=plt.subplots(1,1,figsize=(6,6))
 ris=np.array([1.33]) 
@@ -319,4 +325,5 @@ ext.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 #ext.set_ylim([0, 0.5])
 #ext.set_yticks(np.array([0,.1,.2,.3,.4,.5]))
 #ext.set_yticklabels(np.array([0,.1,.2,.3,.4,.5]),fontsize = fontSizeLarge)
-figExt.savefig('Au_Ext.png', dpi=600)
+if savefigureFlag:
+    figExt.savefig('Au_Ext.png', dpi=figureDPI)
