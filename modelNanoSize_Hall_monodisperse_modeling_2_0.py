@@ -68,7 +68,7 @@ def absorbanceToTristim(waves,absorbance,Yr,gammaFlag=True):
     RGB=cv2.cvtColor(pixel, cv2.COLOR_XYZ2RGB)
     #http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     #XYZtolRGB=np.array([[3.2406255,-1.537208,-0.4986286],[-0.9689307,1.8757561,0.0415175],[0.0557101,-0.2040211,1.0569959]])
-    #RGBtest=np.matmul(XYZtolRGB,pixel[0,0,:])
+    RGBtest=np.matmul(XYZtolRGB,pixel[0,0,:])
     RGBg=np.zeros((RGB.shape),dtype=np.float32)
     for cc in range(RGB.shape[2]):
         if RGB[0,0,cc]<=0.0031308:
