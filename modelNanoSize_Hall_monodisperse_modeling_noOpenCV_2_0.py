@@ -45,16 +45,25 @@ import PyMieScatt as ps
 import datetime
 from scipy.interpolate import interp1d
 import sys
-
-figureDPI=72
-savefigureFlag=True
-
 if sys.version_info >= (3, 0):
     import xarray as xr
     storeXarray=True
 else:
     storeXarray=False
-    
+
+
+material='Cu'
+ris=np.array([1.33, 1.38, 1.43]) 
+#ris=np.arange(1,2,0.005)
+diameters=np.array([115,100,80,60,35])
+#diameters=np.arange(30,120,1)
+diameter_stdevs=diameters*0.1
+opticalDensity=0.1
+#scaleFactorPoly=0.4
+figureDPI=72
+savefigureFlag=True
+
+   
 XYZtolRGB=np.array([[3.2406255,-1.537208,-0.4986286],[-0.9689307,1.8757561,0.0415175],[0.0557101,-0.2040211,1.0569959]])
 
 def single_gauss_func(x, a, x0, sigma):
@@ -170,36 +179,11 @@ D65=fD65(waves)
 illum=D65
 Yr=np.trapz(CIEY*illum, waves)
 
-nDataFrame=pd.read_csv('Johnson.csv',skiprows=0,nrows=49)
-kDataFrame=pd.read_csv('Johnson.csv',skiprows=50,nrows=49)
-fSplineN = interp1d(nDataFrame.values[:,0]*1000, nDataFrame.values[:,1], kind='cubic')
-fSplineK = interp1d(kDataFrame.values[:,0]*1000, kDataFrame.values[:,1], kind='cubic')
+riDataFrame=pd.read_csv('Johnson_ComplexRI.csv',skiprows=0,nrows=49)
+fSplineN = interp1d(riDataFrame['wl'].values*1000, riDataFrame[material+'_n'].values, kind='cubic')
+fSplineK = interp1d(riDataFrame['wl'].values*1000, riDataFrame[material+'_k'].values, kind='cubic')
 m=fSplineN(waves) + 1j * fSplineK(waves)
 
-#ris=np.arange(1,2,0.005)
-#diameters=np.arange(30,120,1)
-ris=np.array([1.33, 1.38, 1.43]) 
-diameters=np.array([115,100,80,60,35])
-diameter_stdevs=diameters*0.1
-
-#gen='G3'
-#diameter=34.1
-#diameter_stdev=6.7
-
-#gen='G5'
-#diameter=59.8
-#diameter_stdev=7.7
-
-#gen='G7'
-#diameter=81.5
-#diameter_stdev=7.6
-
-#gen='G9'
-#diameter=115
-#diameter_stdev=17
-
-scaleFactorMono=16
-scaleFactorPoly=0.4
 colorDataMono=[]
 colorDataPoly=[]
 bextArray=np.zeros((waves.shape[0]))
@@ -215,7 +199,7 @@ for diameter,diameter_stdev in zip(diameters,diameter_stdevs):
         wavelengths,qext,qsca,qabs,g,qpr,qback,qratio=ps.MieQ_withWavelengthRange(m, diameter, nMedium=ri, wavelengthRange=waves)
         lmax=waves[(waves>450) & (waves<800)][np.argmax(qext[(waves>450) & (waves<800)])]
         #RGB, HSV, LAB, XYZ, rgb, rat, RGBg=absorbanceToTristim(waves,qext/scaleFactorMono,Yr,gammaFlag=True)
-        RGB, XYZ, rgb, RGBg=absorbanceToRGB(waves,qext/scaleFactorMono,Yr,gammaFlag=True)
+        RGB, XYZ, rgb, RGBg=absorbanceToRGB(waves,qext*opticalDensity,Yr,gammaFlag=True)
         colorDataMono.append({'ri': ri,'diameter': diameter,'R':RGB[0],'G':RGB[1],'B':RGB[2],'r':rgb[0],'g':rgb[1],'b':rgb[2],'Rg':RGBg[0],'Gg':RGBg[1],'Bg':RGBg[2]})
         if storeXarray:
             mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qext')]=qext
@@ -301,7 +285,7 @@ opt.set_ylim([0, 5.2])
 opt.set_yticks(np.array([0,1,2,3,4,5]))
 opt.set_yticklabels(np.array([0,1,2,3,4,5]),fontsize = fontSizeLarge)
 if savefigureFlag:
-    figRI.savefig('RI.png', dpi=figureDPI)
+    figRI.savefig(material+'_RI.png', dpi=figureDPI)
 
 figExt,ext=plt.subplots(1,1,figsize=(6,6))
 ris=np.array([1.33]) 
@@ -315,10 +299,10 @@ for diameter in diameters:
             signal= dfmieEfficencies[(dfmieEfficencies['ri']==ri) & (dfmieEfficencies['diameter']==diameter)][mie].values[0]
         dfBool=(dfColorMono['diameter']==diameter) & (dfColorMono['ri']==ri)
         color=dfColorMono[dfBool][['Rg','Gg','Bg']].values
-        ext.plot(waves,signal,label=str(diameter)+" nm",color=color[0,:])
+        ext.plot(waves,signal,label=str(diameter)+" nm "+material+" in RI "+str(ri),color=color[0,:])
 ext.set_xlabel('Wavelength (nm)',fontsize = fontSizeLarge, fontweight='bold')
 ext.set_ylabel(r'Q$\mathbf{_{ext}}$',fontsize = fontSizeLarge, fontweight='bold')
-legend = ext.legend(loc='upper left',fontsize = fontSizeLegend)
+legend = ext.legend(loc='best',fontsize = fontSizeLegend)
 ext.set_xlim([360, 830])
 ext.set_xticks(np.array([400,500,600,700,800]))
 ext.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
@@ -326,4 +310,4 @@ ext.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 #ext.set_yticks(np.array([0,.1,.2,.3,.4,.5]))
 #ext.set_yticklabels(np.array([0,.1,.2,.3,.4,.5]),fontsize = fontSizeLarge)
 if savefigureFlag:
-    figExt.savefig('Au_Ext.png', dpi=figureDPI)
+    figExt.savefig(material+'_Ext.png', dpi=figureDPI)
