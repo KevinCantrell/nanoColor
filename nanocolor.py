@@ -46,6 +46,9 @@ import datetime
 from scipy.interpolate import interp1d
 import sys
 
+figureDPI=72
+savefigureFlag=True
+
 if sys.version_info >= (3, 0):
     import xarray as xr
     storeXarray=True
@@ -113,6 +116,36 @@ def absorbanceToTristim(waves,absorbance,Yr,gammaFlag=True):
     RGBg=np.rint(RGBg*255)/255.0
     return RGB, HSV, LAB, XYZ, rgb, rat, RGBg
 
+def absorbanceToRGB(waves,absorbance,Yr,gammaFlag=True):
+    XYZ=np.zeros((3),dtype=np.float32)
+    XYZ[0]=np.trapz(CIEX*illum*10**-absorbance, waves)/Yr
+    XYZ[1]=np.trapz(CIEY*illum*10**-absorbance, waves)/Yr
+    XYZ[2]=np.trapz(CIEZ*illum*10**-absorbance, waves)/Yr
+    #http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    #XYZtolRGB=np.array([[3.2406255,-1.537208,-0.4986286],[-0.9689307,1.8757561,0.0415175],[0.0557101,-0.2040211,1.0569959]])
+    RGB=np.matmul(XYZtolRGB,XYZ)
+    RGBg=np.zeros((RGB.shape),dtype=np.float32)
+    for cc in range(3):
+        if RGB[cc]<=0.0031308:
+            RGBg[cc]=12.92*RGB[cc]
+        else:
+            RGBg[cc]=1.055*RGB[cc]**(1/2.4)-0.055
+        if RGBg[cc]>1:
+            RGBg[cc]=1
+        elif RGBg[cc]<0:
+            RGBg[cc]=0
+    rgb=np.zeros((RGB.shape))
+    if gammaFlag:
+        rgb[0]=RGBg[0]/np.sum(RGBg)
+        rgb[1]=RGBg[1]/np.sum(RGBg)
+        rgb[2]=RGBg[2]/np.sum(RGBg)
+    else:
+        rgb[0]=RGB[0]/np.sum(RGB)
+        rgb[1]=RGB[1]/np.sum(RGB)
+        rgb[2]=RGB[2]/np.sum(RGB)
+    RGBg=np.rint(RGBg*255)/255.0
+    return RGB, XYZ, rgb, RGBg
+
 def ShiftHOriginToValue(hue,maxHue,newOrigin,direction='cw'):
     shifthsv=np.copy(hue).astype('float')
     shiftAmount=maxHue-newOrigin
@@ -125,7 +158,7 @@ def ShiftHOriginToValue(hue,maxHue,newOrigin,direction='cw'):
 
 waves=np.arange(360,830,0.1)
 
-colorDataFrame = pd.read_excel('all_1nm_data.xls',skiprows=63)
+colorDataFrame = pd.read_excel('data/all_1nm_data.xls',skiprows=63)
 fCIEX=interp1d(colorDataFrame.values[:,0],colorDataFrame.values[:,5], kind='cubic')
 fCIEY=interp1d(colorDataFrame.values[:,0],colorDataFrame.values[:,6], kind='cubic')
 fCIEZ=interp1d(colorDataFrame.values[:,0],colorDataFrame.values[:,7], kind='cubic')
@@ -137,8 +170,8 @@ D65=fD65(waves)
 illum=D65
 Yr=np.trapz(CIEY*illum, waves)
 
-nDataFrame=pd.read_csv('Johnson.csv',skiprows=0,nrows=49)
-kDataFrame=pd.read_csv('Johnson.csv',skiprows=50,nrows=49)
+nDataFrame=pd.read_csv('data/Johnson.csv',skiprows=0,nrows=49)
+kDataFrame=pd.read_csv('data/Johnson.csv',skiprows=50,nrows=49)
 fSplineN = interp1d(nDataFrame.values[:,0]*1000, nDataFrame.values[:,1], kind='cubic')
 fSplineK = interp1d(kDataFrame.values[:,0]*1000, kDataFrame.values[:,1], kind='cubic')
 m=fSplineN(waves) + 1j * fSplineK(waves)
@@ -182,7 +215,9 @@ for diameter,diameter_stdev in zip(diameters,diameter_stdevs):
         wavelengths,qext,qsca,qabs,g,qpr,qback,qratio=ps.MieQ_withWavelengthRange(m, diameter, nMedium=ri, wavelengthRange=waves)
         lmax=waves[(waves>450) & (waves<800)][np.argmax(qext[(waves>450) & (waves<800)])]
         RGB, HSV, LAB, XYZ, rgb, rat, RGBg=absorbanceToTristim(waves,qext/scaleFactorMono,Yr,gammaFlag=True)
+        #RGB, XYZ, rgb, RGBg=absorbanceToRGB(waves,qext/scaleFactorMono,Yr,gammaFlag=True)
         colorDataMono.append({'lmax':lmax,'ri': ri,'diameter': diameter,'R':RGB[0],'G':RGB[1],'B':RGB[2],'H':HSV[0],'S':HSV[1],'V':HSV[2],'L*':LAB[0],'a*':LAB[1],'b*':LAB[2],'r':rgb[0],'g':rgb[1],'b':rgb[2],'R/G':rat[0],'R/B':rat[1],'G/B':rat[2],'Rg':RGBg[0],'Gg':RGBg[1],'Bg':RGBg[2]})
+        #colorDataMono.append({'ri': ri,'diameter': diameter,'R':RGB[0],'G':RGB[1],'B':RGB[2],'r':rgb[0],'g':rgb[1],'b':rgb[2],'Rg':RGBg[0],'Gg':RGBg[1],'Bg':RGBg[2]})
         if storeXarray:
             mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qext')]=qext
             mieEfficenciesDataArray.loc[dict(ri=ri,diameter=diameter,mie='qsca')]=qsca
@@ -204,6 +239,7 @@ for diameter,diameter_stdev in zip(diameters,diameter_stdevs):
 
 dfColorMono=pd.DataFrame(colorDataMono)
 dfColorMono=dfColorMono[['ri','diameter','R','G','B','H','S','V','L*','a*','b*','r','g','b','R/G','R/B','G/B','Rg','Gg','Bg','lmax']]
+#dfColorMono=dfColorMono[['ri','diameter','R','G','B','r','g','b','Rg','Gg','Bg']]
 if not(storeXarray):
     dfmieEfficencies=pd.DataFrame(mieEfficencies)
 
@@ -237,7 +273,8 @@ cie.set_yticks(np.array([0,0.5,1,1.5,2]))
 cie.set_yticklabels(np.array([0,0.5,1,1.5,2]),fontsize = fontSizeLarge)
 cie.set_xticks(np.array([400,500,600,700,800]))
 cie.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
-figColor.savefig('CIE_XYZ.png', dpi=600)
+if savefigureFlag:
+    figColor.savefig('CIE_XYZ.png', dpi=figureDPI)
 
 figIll,ill=plt.subplots(1,1,figsize=(6,6))
 ill.plot(waves,illum,'k',label="D65 illuminant")
@@ -250,7 +287,8 @@ ill.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 ill.set_ylim([0, 120])
 ill.set_yticks(np.array([0,25,50,75,100]))
 ill.set_yticklabels(np.array([0,25,50,75,100]),fontsize = fontSizeLarge)
-figIll.savefig('D65.png', dpi=600)
+if savefigureFlag:
+    figIll.savefig('D65.png', dpi=figureDPI)
 
 figRI,opt=plt.subplots(1,1,figsize=(6,6))
 opt.plot(waves,fSplineN(waves),'-k',label="refractive index (n)")
@@ -264,7 +302,8 @@ opt.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 opt.set_ylim([0, 5.2])
 opt.set_yticks(np.array([0,1,2,3,4,5]))
 opt.set_yticklabels(np.array([0,1,2,3,4,5]),fontsize = fontSizeLarge)
-figRI.savefig('RI.png', dpi=600)
+if savefigureFlag:
+    figRI.savefig('RI.png', dpi=figureDPI)
 
 figExt,ext=plt.subplots(1,1,figsize=(6,6))
 ris=np.array([1.33]) 
@@ -288,4 +327,5 @@ ext.set_xticklabels(np.array([400,500,600,700,800]),fontsize = fontSizeLarge)
 #ext.set_ylim([0, 0.5])
 #ext.set_yticks(np.array([0,.1,.2,.3,.4,.5]))
 #ext.set_yticklabels(np.array([0,.1,.2,.3,.4,.5]),fontsize = fontSizeLarge)
-figExt.savefig('Au_Ext.png', dpi=600)
+if savefigureFlag:
+    figExt.savefig('Au_Ext.png', dpi=figureDPI)
