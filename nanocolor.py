@@ -40,15 +40,15 @@ Created on Wed Sep 12 20:11:19 2018
 # https://pymiescatt.readthedocs.io/en/latest/index.html
 # http://cvrl.ioo.ucl.ac.uk/index.htm
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-import pandas as pd
-import cv2
-import PyMieScatt as ps
-import datetime
-from scipy.interpolate import interp1d
 import sys
+
+import PyMieScatt as ps
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib import rcParams
+from scipy.interpolate import interp1d
 
 figureDPI = 72
 savefigureFlag = True
@@ -83,7 +83,6 @@ def absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True):
     pixel[0, 0, 2] = np.trapz(CIEZ * illum * 10 ** -absorbance, waves) / Yr
     XYZ = pixel[0, 0, :]
     RGB = cv2.cvtColor(pixel, cv2.COLOR_XYZ2RGB)
-    RGBtest = np.matmul(XYZtolRGB, pixel[0, 0, :])
     RGBg = np.zeros((RGB.shape), dtype=np.float32)
     for cc in range(RGB.shape[2]):
         if RGB[0, 0, cc] <= 0.0031308:
@@ -234,12 +233,19 @@ if storeXarray:
 else:
     mieEfficencies = []
 spectCount = 0
-for diameter, diameter_stdev in zip(diameters, diameter_stdevs):
+for diameter, _ in zip(diameters, diameter_stdevs):
     for ri in ris:
         print("diameter = " + str(diameter) + " ri = " + str(ri))
-        wavelengths, qext, qsca, qabs, g, qpr, qback, qratio = ps.MieQ_withWavelengthRange(
-            m, diameter, nMedium=ri, wavelengthRange=waves
-        )
+        (
+            wavelengths,
+            qext,
+            qsca,
+            qabs,
+            g,
+            qpr,
+            qback,
+            qratio,
+        ) = ps.MieQ_withWavelengthRange(m, diameter, nMedium=ri, wavelengthRange=waves)
         lmax = waves[(waves > 450) & (waves < 800)][
             np.argmax(qext[(waves > 450) & (waves < 800)])
         ]
