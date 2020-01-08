@@ -1,0 +1,14 @@
+   5                            n_l: number of layers
+ 1.8          -1.7              ri1: refr. index of layer 1
+ 0.8          -0.7              ri3: refr. index of layer 3
+ 1.2          -0.09             ri2: refr. index of layer 2
+ 2.8          -0.2              ri1: refr. index of layer 1
+ 1.5          -0.4              ri3: refr. index of layer 3
+   1                             iv: (=0) rel. radius, (=1) rel. volume
+0.1                              v1: v1/v, relative volume of layer 1
+0.26                             v2: v2/v, relative volume of layer 2
+0.044                            v3: v3/v, relative volume of layer 3
+0.3666                           v4: v4/v, relative volume of layer 4
+1.                                x: x_ini, initial size parameter
+1.                                x: dx, step
+25.                               x: x_fin, final size parameter
