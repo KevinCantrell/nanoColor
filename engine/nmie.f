@@ -1,6 +1,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! This file has been marked up so that f2py can properly wrap    !
 ! the functions to be used in Python testing.                    !
+! Additionally, the "main" function has been removed so that the !
+! code can be properly compiled into a shared object.            !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 c*********** Light Scattering by Spherical Particles *************
@@ -67,10 +69,11 @@ cf2py complex*16, intent(in), dimension(n_l) :: ri_n
 cf2py real*8,     intent(in), dimension(n_l) :: aa
 cf2py real*8,     intent(in)                 :: x
 cf2py real*8,     intent(out)                :: qext
+cf2py real*8,     intent(out)                :: qsca
 cf2py real*8,     intent(out)                :: qabs
 cf2py real*8,     intent(out)                :: qbk
 cf2py real*8,     intent(out)                :: qpr
-cf2py real*8,     intent(out)                :: qalb
+cf2py real*8,     intent(out)                :: alb
 cf2py real*8,     intent(out)                :: g
       DIMENSION RA(nterms), RB(nterms),
      *          ri_n(n_l), aa(n_l), xx(n_layers),
@@ -193,7 +196,7 @@ c--------------------------------------------------------------------
       IMPLICIT REAL*8 (A-H,O-Q,T-Z),COMPLEX*16 (R-S)
 cf2py complex*16, intent(in)                  :: Rx
 cf2py integer,    intent(in)                  :: NUM
-cf2py real*8,     dimension(NUM), intent(out) :: RU
+cf2py complex*16, dimension(NUM), intent(out) :: RU
       DIMENSION RU(NUM)
       S = 1d0 / rx
       RU(NUM)=(NUM+1.0D0)*S
@@ -372,7 +375,7 @@ c--------
         end if
 
         if(cdabs(srbb(j,i) - sa(j)).eq.0d0) then
-         sha(j) = srbb(j,i) * srd1(j,i) / (srbb(j,i) - sa(j))
+         sha(j) = srbb(j,i) * srd1(j,i) / (srbb(j,i) - sa(j) + 1d-30)
      *           - sa(j) * srd2(j,i) / (srbb(j,i) - sa(j) + 1d-30)
          else
          sha(j) = srbb(j,i) * srd1(j,i) / (srbb(j,i) - sa(j))
@@ -380,7 +383,7 @@ c--------
         end if
 
         if(cdabs(srbb(j,i) - sb(j)).eq.0d0) then
-         shb(j) = srbb(j,i) * srd1(j,i) / (srbb(j,i) - sb(j))
+         shb(j) = srbb(j,i) * srd1(j,i) / (srbb(j,i) - sb(j) + 1d-30)
      *           - sb(j) * srd2(j,i) / (srbb(j,i) - sb(j) + 1d-30)
          else
          shb(j) = srbb(j,i) * srd1(j,i) / (srbb(j,i) - sb(j))
