@@ -28,6 +28,38 @@ def shexqn1(ri_n, aa, x):
                           Theory: exact
                           Results: efficiency factors
     March 1999, AI SPbU
+
+    Parameters
+    ----------
+    ri_n : complex ndarray
+        NumPy array of the refactive index for each
+        layer of the material, where the first element
+        is the innermost layer, and the last element
+        is the outermost layer.
+    aa : float ndarray
+        Relative radii of each layer in the material.
+        The length of the array must be identical to
+        ri_n.
+    x : float
+        Size parameter of the particle.
+
+    Returns
+    -------
+    Qext : float
+        Extinction factors
+    Qsca : float
+        Scattering factors
+    Qabs : float
+        Absorption factors
+    Qbk : float
+        Backscattering factors
+    Qpr : float
+        Radiation pressure factors
+    albedo : float
+        Particle's albedo
+    g : float
+        Asymmetry factor
+
     """
     n_l = len(ri_n)
     xx = numpy.empty(n_l, dtype=numpy.float64)
