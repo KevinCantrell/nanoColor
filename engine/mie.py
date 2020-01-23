@@ -65,31 +65,19 @@ def shexqn1(ri_n, aa, x):
     xx = numpy.empty(n_l, dtype=numpy.float64)
 
     ax = 1.0 / x
-    xx[0] = x * aa[0]
-    xx[-1] = x
 
-    for i in range(1, n_l - 1):
-        xx[i] = 0.0
-        for j in range(i + 1):
-            xx[i] += aa[j]
-        xx[i] *= x
+    # Each relative radius is multiplied by the size parameter.
+    for i in range(n_l):
+        xx[i] = numpy.sum(aa[: i + 1]) * x
+    xx[-1] = x  # Sum of all aa should be 1, but just make sure...
 
-    # d1(x), rd3(x), rc(x)
     num = nm(x)
     d1x = aax(ax, num)
     rd3x, rcx = cd3x(x, d1x)
 
-    ari = abs(ri_n[0])
-    for i in range(1, n_l):
-        ari1 = abs(ri_n[i])
-        if ari1 > ari:
-            ari = ari1
-
+    ari = numpy.max(numpy.absolute(ri_n))
     num2 = nm(ari * x)
 
-    # rd11(m_1*x_1)
-    if (ri_n[0] * xx[0]).imag > 20.0:
-        print("k*x > 20", (ri_n[0] * xx[0]).imag)
     rd11 = aa1(ri_n[0] * xx[0], num2)
 
     # In the original FORTRAN code, the following arrays were
@@ -108,25 +96,8 @@ def shexqn1(ri_n, aa, x):
     srd1 = numpy.zeros((n_l, num3), dtype=numpy.complex128)
     srd2 = numpy.zeros((n_l, num3), dtype=numpy.complex128)
     for i in range(1, n_l):
-
-        # rd1(m_i*x_i-1), rd2(m_i*x_i-1), rbb(m_i*x_i-1), rcc(m_i*x_i-1),
-        if (ri_n[i] * xx[i - 1]).imag > 20.0:
-            print("k*x > 20", (ri_n[i] * xx[i - 1]).imag)
-        rd1, rd2, rbb = bcd(ri_n[i] * xx[i - 1], num2)
-        for j in range(num2):
-            rrbb[i, j] = rbb[j]
-            rrd1[i, j] = rd1[j]
-            rrd2[i, j] = rd2[j]
-
-        # rd1(m_i*x_i), rd2(m_i*x_i), rbb(m_i*x_i), rcc(m_i*x_i),
-        if (ri_n[i] * xx[i]).imag > 20.0:
-            print("k*x > 20", (ri_n[i] * xx[i]).imag)
-
-        rd1, rd2, rbb = bcd(ri_n[i] * xx[i], num2)
-        for j in range(num2):
-            srbb[i, j] = rbb[j]
-            srd1[i, j] = rd1[j]
-            srd2[i, j] = rd2[j]
+        rrd1[i, :num2], rrd2[i, :num2], rrbb[i, :num2] = bcd(ri_n[i] * xx[i - 1], num2)
+        srd1[i, :num2], srd2[i, :num2], srbb[i, :num2] = bcd(ri_n[i] * xx[i], num2)
 
     num1, ra, rb = abn1(
         ri_n, num, rrbb, rrd1, rrd2, srbb, srd1, srd2, rd11, rd3x, rcx, d1x
@@ -173,8 +144,9 @@ def aa1(rx, num):
     s = 1.0 / rx
     ru = numpy.empty(num, dtype=numpy.complex128)
     ru[-1] = (num + 1.0) * s
-    for j in range(num - 1):
-        i = (num - 1) - (j + 1)
+    n = num - 1
+    for j in range(n):
+        i = n - (j + 1)
         i1 = i + 1
         s1 = (i1 + 1) * s
         ru[i] = s1 - 1.0 / (ru[i1] + s1)
@@ -195,8 +167,9 @@ def aax(a, num):
     """
     ru = numpy.empty(num, dtype=numpy.float64)
     ru[-1] = (num + 1.0) * a
-    for j in range(num - 1):
-        i = (num - 1) - (j + 1)
+    n = num - 1
+    for j in range(n):
+        i = n - (j + 1)
         i1 = i + 1
         s1 = (i1 + 1) * a
         ru[i] = s1 - 1.0 / (ru[i1] + s1)
@@ -345,49 +318,37 @@ def abn1(ri_n, num, rrbb, rrd1, rrd2, srbb, srd1, srd2, rd11, rd3x, rcx, d1x):
         shb[0] = rd11[i]
 
         for j in range(1, n_l):
-            if abs(ri_n[j] * sha[j - 1] - ri_n[j - 1] * rrd2[j, i]) == 0.0:
-                sa[j] = (
-                    rrbb[j, i]
-                    * (ri_n[j] * sha[j - 1] - ri_n[j - 1] * rrd1[j, i])
-                    / (ri_n[j] * sha[j - 1] - ri_n[j - 1] * rrd2[j, i] + 1e-30)
-                )
-            else:
-                sa[j] = (
-                    rrbb[j, i]
-                    * (ri_n[j] * sha[j - 1] - ri_n[j - 1] * rrd1[j, i])
-                    / (ri_n[j] * sha[j - 1] - ri_n[j - 1] * rrd2[j, i])
-                )
+            denominator = ri_n[j] * sha[j - 1] - ri_n[j - 1] * rrd2[j, i]
+            if abs(denominator) == 0.0:
+                denominator += 1e-30
+            sa[j] = (
+                rrbb[j, i]
+                * (ri_n[j] * sha[j - 1] - ri_n[j - 1] * rrd1[j, i])
+                / denominator
+            )
 
-            if abs(ri_n[j] * shb[j - 1] - ri_n[j - 1] * rrd2[j, i]) == 0.0:
-                sb[j] = (
-                    rrbb[j, i]
-                    * (ri_n[j - 1] * shb[j - 1] - ri_n[j] * rrd1[j, i])
-                    / (ri_n[j - 1] * shb[j - 1] - ri_n[j] * rrd2[j, i] + 1e-30)
-                )
-            else:
-                sb[j] = (
-                    rrbb[j, i]
-                    * (ri_n[j - 1] * shb[j - 1] - ri_n[j] * rrd1[j, i])
-                    / (ri_n[j - 1] * shb[j - 1] - ri_n[j] * rrd2[j, i])
-                )
+            denominator = ri_n[j - 1] * shb[j - 1] - ri_n[j] * rrd2[j, i]
+            if abs(denominator) == 0.0:
+                denominator += 1e-30
+            sb[j] = (
+                rrbb[j, i]
+                * (ri_n[j - 1] * shb[j - 1] - ri_n[j] * rrd1[j, i])
+                / denominator
+            )
 
-            if abs(srbb[j, i] - sa[j]) == 0.0:
-                sha[j] = srbb[j, i] * srd1[j, i] / (srbb[j, i] - sa[j] + 1e-30) - sa[
-                    j
-                ] * srd2[j, i] / (srbb[j, i] - sa[j] + 1e-30)
-            else:
-                sha[j] = srbb[j, i] * srd1[j, i] / (srbb[j, i] - sa[j]) - sa[j] * srd2[
-                    j, i
-                ] / (srbb[j, i] - sa[j])
+            denominator = srbb[j, i] - sa[j]
+            if abs(denominator) == 0.0:
+                denominator += 1e-30
+            sha[j] = (
+                srbb[j, i] * srd1[j, i] / denominator - sa[j] * srd2[j, i] / denominator
+            )
 
-            if abs(srbb[j, i] - sb[j]) == 0.0:
-                shb[j] = srbb[j, i] * srd1[j, i] / (srbb[j, i] - sb[j] + 1e-30) - sb[
-                    j
-                ] * srd2[j, i] / (srbb[j, i] - sb[j] + 1e-30)
-            else:
-                shb[j] = srbb[j, i] * srd1[j, i] / (srbb[j, i] - sb[j]) - sb[j] * srd2[
-                    j, i
-                ] / (srbb[j, i] - sb[j])
+            denominator = srbb[j, i] - sb[j]
+            if abs(denominator) == 0.0:
+                denominator += 1e-30
+            shb[j] = (
+                srbb[j, i] * srd1[j, i] / denominator - sb[j] * srd2[j, i] / denominator
+            )
 
         # calculations of a(n), b(n)
         ra[i] = rcx[i] * (sha[-1] - ri_n[-1] * d1x[i]) / (sha[-1] - ri_n[-1] * rd3x[i])
