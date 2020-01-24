@@ -111,6 +111,10 @@ def shexqn1(ri_n, aa, x):
     return qext, qsca, qabs, qbk, qpr, alb, g
 
 
+# Alias shexqn1 to a better name for use in real code.
+calculate_efficiencies = shexqn1
+
+
 @numba.jit(nogil=True, cache=True)
 def nm(x):
     """
