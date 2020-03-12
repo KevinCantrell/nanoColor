@@ -21,7 +21,7 @@ import numpy
 # we could if we wanted to).
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def shexqn1(ri_n, aa, x):
     """
     *********   shexqn1 - Spheres: n-layers
@@ -115,7 +115,7 @@ def shexqn1(ri_n, aa, x):
 calculate_efficiencies = shexqn1
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def nm(x):
     """
     NM-auxiliary function for AA1 & BESSEL
@@ -132,7 +132,7 @@ def nm(x):
         return int(1.25 * x + 15.5)
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def aa1(rx, num):
     """
     AA1-subroutine for calculations of the ratio of the derivative
@@ -157,7 +157,7 @@ def aa1(rx, num):
     return ru
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def aax(a, num):
     """
     AAx-subroutine for calculations of the ratio of the derivative
@@ -180,7 +180,7 @@ def aax(a, num):
     return ru
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def cd3x(x, d1x):
     """
     CD3X-subroutine for calculations of the ratio of the derivative
@@ -214,7 +214,7 @@ def cd3x(x, d1x):
     return rd3x, rcx
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def bcd(rx, num):
     """
      BCD-subroutine for calculations of the ratios of the derivative
@@ -260,7 +260,7 @@ def bcd(rx, num):
     return rd1, rd2, rbb
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def qq1(a, ra, rb):
     """
     QQ1-subroutine for calculations of the efficiency factors for
@@ -292,7 +292,7 @@ def qq1(a, ra, rb):
     return qext, qsca, qbk.real, qpr.real
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def abn1(ri_n, num, rrbb, rrd1, rrd2, srbb, srd1, srd2, rd11, rd3x, rcx, d1x):
     """
     ABn1-subroutine for calculations of the complex coefficients

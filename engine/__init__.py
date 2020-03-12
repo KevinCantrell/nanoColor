@@ -107,7 +107,7 @@ def _validate_rel_rad(relative_radii):
         )
 
 
-@numba.jit(nogil=True)
+@numba.jit(nogil=True, cache=True)
 def _mie_efficiency(diameter, rel_rad, wavelength, ri, medium):
     """
     Work that actually calculates the mie efficiencies.
@@ -135,7 +135,7 @@ def _mie_efficiency(diameter, rel_rad, wavelength, ri, medium):
     return shexqn1(ri, rel_rad, size_parameter)[:3]
 
 
-@numba.jit(nogil=True, parallel=True)
+@numba.jit(nogil=True, parallel=True, cache=True)
 def _mie_efficiencies_by_wavelength(
     diameter, relative_radii, wavelengths, refractive_index, medium
 ):
