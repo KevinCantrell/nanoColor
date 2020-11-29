@@ -43,7 +43,6 @@ Created on Wed Sep 12 20:11:19 2018
 import math
 import sys
 
-import PyMieScatt as ps
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -243,16 +242,6 @@ for diameter, _ in zip(diameters, diameter_stdevs):
         qpr = np.empty(len(waves), dtype=np.float64)
         albedo = np.empty(len(waves), dtype=np.float64)
         g = np.empty(len(waves), dtype=np.float64)
-        # (
-        #     wavelengths,
-        #     qext,
-        #     qsca,
-        #     qabs,
-        #     g,
-        #     qpr,
-        #     qback,
-        #     qratio,
-        # ) = ps.MieQ_withWavelengthRange(m, diameter, nMedium=ri, wavelengthRange=waves)
         qext, qsca, qabs = nanocolor.mie_efficiencies_by_wavelength(
             diameter,
             np.asarray([1.0]),
