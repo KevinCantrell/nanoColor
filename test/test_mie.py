@@ -11,13 +11,13 @@ from hypothesis import assume, given, settings
 from hypothesis.strategies import complex_numbers, floats, integers, lists
 import numpy
 
-import mie  # python
+import nanocolor.mie as mie  # python
 import nmie  # fortran
 
 
 # Make hypothesis not worry about the first iteration of functions
 # running long due to the jit compiler.
-settings.register_profile("jit", deadline=1E5)
+settings.register_profile("jit", deadline=1e5)
 settings.load_profile("jit")
 
 # We will be repeating optins for many of the hypothesis strategies,
@@ -25,8 +25,8 @@ settings.load_profile("jit")
 rational = dict(allow_nan=False, allow_infinity=False)
 int_opts = dict(min_value=1, max_value=1000)
 list_opts = dict(min_size=1, max_size=1000)
-float_opts = dict(min_value=-1e20, max_value=1e20, **rational,)
-complex_opts = dict(min_magnitude=0, max_magnitude=1e20, **rational,)
+float_opts = dict(min_value=-1e20, max_value=1e20, **rational)
+complex_opts = dict(min_magnitude=0, max_magnitude=1e20, **rational)
 
 
 @given(floats(min_value=0, max_value=1e6, **rational))
@@ -34,9 +34,7 @@ def test_nm(x):
     assert mie.nm(x) == nmie.nm(x)
 
 
-@given(
-    complex_numbers(**complex_opts).filter(lambda x: x != 0), integers(**int_opts),
-)
+@given(complex_numbers(**complex_opts).filter(lambda x: x != 0), integers(**int_opts))
 def test_aa1(rx, num):
     a = mie.aa1(rx, num)
     b = nmie.aa1(rx, num)
@@ -45,7 +43,8 @@ def test_aa1(rx, num):
 
 
 @given(
-    floats(**float_opts).filter(lambda x: x != 0), integers(**int_opts),
+    floats(**float_opts).filter(lambda x: x != 0),
+    integers(**int_opts),
 )
 def test_aax(a, num):
     assert numpy.all(numpy.equal(mie.aax(a, num), nmie.aax(a, num)))
@@ -53,7 +52,7 @@ def test_aax(a, num):
 
 @given(
     floats(**float_opts).filter(lambda x: x != 0),
-    lists(floats(**float_opts).filter(lambda x: x != 0), **list_opts,),
+    lists(floats(**float_opts).filter(lambda x: x != 0), **list_opts),
 )
 def test_cd3x(x, d1x):
     d1x = numpy.asarray(d1x, dtype=numpy.float64)
@@ -84,8 +83,8 @@ def test_bcd(rx, num):
 
 @given(
     floats(**float_opts).filter(lambda x: x != 0),
-    lists(complex_numbers(**complex_opts).filter(lambda x: x != 0), **list_opts,),
-    lists(complex_numbers(**complex_opts).filter(lambda x: x != 0), **list_opts,),
+    lists(complex_numbers(**complex_opts).filter(lambda x: x != 0), **list_opts),
+    lists(complex_numbers(**complex_opts).filter(lambda x: x != 0), **list_opts),
 )
 def test_qq1(a, ra, rb):
     # Ensure complex arrays are the same length

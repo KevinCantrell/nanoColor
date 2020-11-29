@@ -40,6 +40,7 @@ Created on Wed Sep 12 20:11:19 2018
 # https://pymiescatt.readthedocs.io/en/latest/index.html
 # http://cvrl.ioo.ucl.ac.uk/index.htm
 
+import math
 import sys
 
 import PyMieScatt as ps
@@ -49,6 +50,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import rcParams
 from scipy.interpolate import interp1d
+
+import nanocolor
 
 figureDPI = 72
 savefigureFlag = True
@@ -236,16 +239,27 @@ spectCount = 0
 for diameter, _ in zip(diameters, diameter_stdevs):
     for ri in ris:
         print("diameter = " + str(diameter) + " ri = " + str(ri))
-        (
-            wavelengths,
-            qext,
-            qsca,
-            qabs,
-            g,
-            qpr,
-            qback,
-            qratio,
-        ) = ps.MieQ_withWavelengthRange(m, diameter, nMedium=ri, wavelengthRange=waves)
+        qbk = np.empty(len(waves), dtype=np.float64)
+        qpr = np.empty(len(waves), dtype=np.float64)
+        albedo = np.empty(len(waves), dtype=np.float64)
+        g = np.empty(len(waves), dtype=np.float64)
+        # (
+        #     wavelengths,
+        #     qext,
+        #     qsca,
+        #     qabs,
+        #     g,
+        #     qpr,
+        #     qback,
+        #     qratio,
+        # ) = ps.MieQ_withWavelengthRange(m, diameter, nMedium=ri, wavelengthRange=waves)
+        qext, qsca, qabs = nanocolor.mie_efficiencies_by_wavelength(
+            diameter,
+            np.asarray([1.0]),
+            waves,
+            m.reshape((1, -1)),
+            medium=ri,
+        )
         lmax = waves[(waves > 450) & (waves < 800)][
             np.argmax(qext[(waves > 450) & (waves < 800)])
         ]
@@ -307,12 +321,12 @@ for diameter, _ in zip(diameters, diameter_stdevs):
             ] = qabs
             mieEfficenciesDataArray.loc[dict(ri=ri, diameter=diameter, mie="g")] = g
             mieEfficenciesDataArray.loc[dict(ri=ri, diameter=diameter, mie="qpr")] = qpr
-            mieEfficenciesDataArray.loc[
-                dict(ri=ri, diameter=diameter, mie="qback")
-            ] = qback
-            mieEfficenciesDataArray.loc[
-                dict(ri=ri, diameter=diameter, mie="qratio")
-            ] = qratio
+            # mieEfficenciesDataArray.loc[
+            #     dict(ri=ri, diameter=diameter, mie="qback")
+            # ] = qback
+            # mieEfficenciesDataArray.loc[
+            #     dict(ri=ri, diameter=diameter, mie="qratio")
+            # ] = qratio
         else:
             mieEfficencies.append(
                 {

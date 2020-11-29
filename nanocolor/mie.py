@@ -1,14 +1,32 @@
 """
-All function and variable names have been taken directly
-from nmie-reference/nmie3a.for. I am just as unhappy as
-you are about how unmeaningful the names are, and am
-equally unhappy about the lack of comments (any clarifying
-comments were added as part of porting).
+Light Scattering by Spherical Particles
+n-miev3 (n-miev2 + Rayleigh approximation
+                 + EMT -- n-layered spheres)
+
+Calculations of extinction, scattering, absorption, etc.
+efficiency factors for n-layered spheres.
+
+Recursive algorithms of Wu & Wang (Radio Sci. 26, 1393, 1991)
+created by N.V. Voshchinnikov
+(c) 1999 Sobolev Astronomical Institute, St. Petersburg Univ.
+
+Port to Python: Seth M. Morton, 2019
+
+Orignal code obtained from:
+http://www.astro.spbu.ru/staff/ilin2/SOFTWARE/nmie0.html
+
+See README.txt in the folder nmie-reference for further details.
 """
 import math
 
 import numba
 import numpy
+
+# All function and variable names have been taken directly
+# from nmie-reference/nmie3a.for. I am just as unhappy as
+# you are about how unmeaningful the names are, and am
+# equally unhappy about the lack of comments (any clarifying
+# comments were added as part of porting).
 
 # This module uses the library "numba" to jit-compile
 # (jit stands for "just in time") the python code into
