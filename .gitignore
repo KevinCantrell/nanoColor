@@ -1,3 +1,5 @@
 .venv/
 .vscode
-
+.hypothesis/
+.tox/
+__pycache__/
