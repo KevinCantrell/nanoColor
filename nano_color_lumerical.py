@@ -174,8 +174,42 @@ def ShiftHOriginToValue(hue, maxHue, newOrigin, direction="cw"):
     return hue
 
 
-waves = np.arange(360, 830, 0.1)
 
+
+root = tk.Tk()
+root.withdraw()
+root.wm_attributes('-topmost', 1)
+#file_path = askopenfilename(initialdir=filePathImage,filetypes=[('image files', '*.jpg | *.jpeg | *.png'),('video files', '*.mp4 | *.mkv | *.avi | *.MOV'),('all files', '.*')])
+file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files', '.*')])
+
+file_pathSplit = os.path.split(file_path)
+file_dir=file_pathSplit[0]
+file_file=file_pathSplit[1]
+dfLumerical=pd.DataFrame()
+polarization=str(file_file[file_file.find("(")+1:file_file.find(")")])
+file_open=file_dir+r"/"+file_file[:file_file.find("(")]+"("+polarization+").txt"
+dfFile=pd.read_csv(file_open, nrows=100)
+dfLumerical["wavelength"]=dfFile["lambda"]*1e9
+dfLumerical["A"+polarization]=dfFile[" Y"]
+dfFile=pd.read_csv(file_path, skiprows=103, nrows=100)
+dfLumerical["S"+polarization]=dfFile[" Y"]
+dfLumerical["E"+polarization]=dfLumerical["A"+polarization]+dfLumerical["S"+polarization]
+if polarization=="0":
+    polarization="90"
+else:
+    polarization="0"
+file_open=file_dir+r"/"+file_file[:file_file.find("(")]+"("+polarization+").txt"
+dfFile=pd.read_csv(file_open, nrows=100)
+dfLumerical["wavelength"]=dfFile["lambda"]*1e9
+dfLumerical["A"+polarization]=dfFile[" Y"]
+dfFile=pd.read_csv(file_path, skiprows=103, nrows=100)
+dfLumerical["S"+polarization]=dfFile[" Y"]
+dfLumerical["E"+polarization]=dfLumerical["A"+polarization]+dfLumerical["S"+polarization]
+dfLumerical["T"]=np.mean([dfLumerical["E0"],dfLumerical["E90"]],axis=0)   
+waveIncrement=np.floor(np.min(np.abs(np.diff(dfLumerical["wavelength"]))))
+waveMin=np.max([np.min(dfLumerical["wavelength"]),360])
+waveMax=np.min([np.max(dfLumerical["wavelength"]),830])
+waves = np.arange(waveMin, waveMax+waveIncrement, waveIncrement)
 colorDataFrame = pd.read_excel("data/all_1nm_data.xls", skiprows=63)
 fCIEX = interp1d(colorDataFrame.values[:, 0], colorDataFrame.values[:, 5], kind="cubic")
 fCIEY = interp1d(colorDataFrame.values[:, 0], colorDataFrame.values[:, 6], kind="cubic")
@@ -187,7 +221,6 @@ CIEZ = fCIEZ(waves)
 D65 = fD65(waves)
 illum = D65
 Yr = np.trapz(CIEY * illum, waves)
-
 nDataFrame = pd.read_csv("data/Johnson.csv", skiprows=0, nrows=49)
 kDataFrame = pd.read_csv("data/Johnson.csv", skiprows=50, nrows=49)
 fSplineN = interp1d(
@@ -198,338 +231,95 @@ fSplineK = interp1d(
 )
 m = fSplineN(waves) + 1j * fSplineK(waves)
 
-root = tk.Tk()
-root.withdraw()
-root.wm_attributes('-topmost', 1)
-#file_path = askopenfilename(initialdir=filePathImage,filetypes=[('image files', '*.jpg | *.jpeg | *.png'),('video files', '*.mp4 | *.mkv | *.avi | *.MOV'),('all files', '.*')])
-file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files', '.*')])
-file_pathSplit = os.path.split(file_path)
-file_dir=file_pathSplit[0]
-file_file=file_pathSplit[1]
-dfLumerical=pd.read_csv(file_path, nrows=100)
+fabsorbance=interp1d(dfLumerical["wavelength"],dfLumerical["T"], kind="cubic")
+absorbance=fabsorbance(waves)
+absorbance=absorbance/np.max(absorbance)
+RGB, HSV, LAB, XYZ, rgb, rat, RGBg = absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True)
+#color = dfColorMono[dfBool][["Rg", "Gg", "Bg"]].values
+plt.plot(waves,absorbance,color=RGBg)
 
 
 
-# ris=np.arange(1,2,0.005)
-# diameters=np.arange(30,120,1)
-ris = np.array([1.33, 1.38, 1.43])
-diameters = np.array([115, 100, 80, 60, 35])
-diameter_stdevs = diameters * 0.1
 
-# gen='G3'
-# diameter=34.1
-# diameter_stdev=6.7
+# rcParams["font.family"] = "sans-serif"
+# rcParams["font.sans-serif"] = ["Arial"]
 
-# gen='G5'
-# diameter=59.8
-# diameter_stdev=7.7
+# fontSizeLarge = 14
+# fontSizeLargest = 18
+# fontSizeSmall = 12
+# fontSizeLegend = 12
 
-# gen='G7'
-# diameter=81.5
-# diameter_stdev=7.6
+# figColor, cie = plt.subplots(1, 1, figsize=(6, 6))
+# cie.plot(waves, CIEX, "r", label="CIE X")
+# cie.plot(waves, CIEY, "g", label="CIE Y")
+# cie.plot(waves, CIEZ, "b", label="CIE Z")
+# cie.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
+# cie.set_ylabel("Response", fontsize=fontSizeLarge, fontweight="bold")
+# legend = cie.legend(loc="upper right", fontsize=fontSizeLegend)
+# cie.set_xlim([360, 830])
+# cie.set_ylim([0, 2])
+# cie.set_yticks(np.array([0, 0.5, 1, 1.5, 2]))
+# cie.set_yticklabels(np.array([0, 0.5, 1, 1.5, 2]), fontsize=fontSizeLarge)
+# cie.set_xticks(np.array([400, 500, 600, 700, 800]))
+# cie.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
+# if savefigureFlag:
+#     figColor.savefig("CIE_XYZ.png", dpi=figureDPI)
 
-# gen='G9'
-# diameter=115
-# diameter_stdev=17
+# figIll, ill = plt.subplots(1, 1, figsize=(6, 6))
+# ill.plot(waves, illum, "k", label="D65 illuminant")
+# ill.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
+# ill.set_ylabel("Intensity", fontsize=fontSizeLarge, fontweight="bold")
+# legend = ill.legend(loc="upper right", fontsize=fontSizeLegend)
+# ill.set_xlim([360, 830])
+# ill.set_xticks(np.array([400, 500, 600, 700, 800]))
+# ill.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
+# ill.set_ylim([0, 120])
+# ill.set_yticks(np.array([0, 25, 50, 75, 100]))
+# ill.set_yticklabels(np.array([0, 25, 50, 75, 100]), fontsize=fontSizeLarge)
+# if savefigureFlag:
+#     figIll.savefig("D65.png", dpi=figureDPI)
 
-scaleFactorMono = 16
-scaleFactorPoly = 0.4
-colorDataMono = []
-colorDataPoly = []
-bextArray = np.zeros((waves.shape[0]))
-sizeDistributionDiameterBins = np.arange(20.0, 200.0, 1)
-if storeXarray:
-    mieEfficenciesDataArray = xr.DataArray(
-        dims=("ri", "diameter", "wavelength", "mie"),
-        coords={
-            "ri": ris,
-            "diameter": diameters,
-            "wavelength": waves,
-            "mie": ["qext", "qsca", "qabs", "g", "qpr", "qback", "qratio"],
-        },
-    )
-else:
-    mieEfficencies = []
-spectCount = 0
-for diameter, _ in zip(diameters, diameter_stdevs):
-    for ri in ris:
-        print("diameter = " + str(diameter) + " ri = " + str(ri))
-        qbk = np.empty(len(waves), dtype=np.float64)
-        qpr = np.empty(len(waves), dtype=np.float64)
-        albedo = np.empty(len(waves), dtype=np.float64)
-        g = np.empty(len(waves), dtype=np.float64)
-        qext, qsca, qabs = nanocolor.mie_efficiencies_by_wavelength(
-            diameter,
-            np.asarray([1.0]),
-            waves,
-            m.reshape((1, -1)),
-            medium=ri,
-        )
-        lmax = waves[(waves > 450) & (waves < 800)][
-            np.argmax(qext[(waves > 450) & (waves < 800)])
-        ]
-        RGB, HSV, LAB, XYZ, rgb, rat, RGBg = absorbanceToTristim(
-            waves, qext / scaleFactorMono, Yr, gammaFlag=True
-        )
-        # RGB, XYZ, rgb, RGBg = absorbanceToRGB(
-        #     waves, qext / scaleFactorMono, Yr, gammaFlag=True
-        # )
-        colorDataMono.append(
-            {
-                "lmax": lmax,
-                "ri": ri,
-                "diameter": diameter,
-                "R": RGB[0],
-                "G": RGB[1],
-                "B": RGB[2],
-                "H": HSV[0],
-                "S": HSV[1],
-                "V": HSV[2],
-                "L*": LAB[0],
-                "a*": LAB[1],
-                "b*": LAB[2],
-                "r": rgb[0],
-                "g": rgb[1],
-                "b": rgb[2],
-                "R/G": rat[0],
-                "R/B": rat[1],
-                "G/B": rat[2],
-                "Rg": RGBg[0],
-                "Gg": RGBg[1],
-                "Bg": RGBg[2],
-            }
-        )
-        # colorDataMono.append(
-        #     {
-        #         "ri": ri,
-        #         "diameter": diameter,
-        #         "R": RGB[0],
-        #         "G": RGB[1],
-        #         "B": RGB[2],
-        #         "r": rgb[0],
-        #         "g": rgb[1],
-        #         "b": rgb[2],
-        #         "Rg": RGBg[0],
-        #         "Gg": RGBg[1],
-        #         "Bg": RGBg[2],
-        #     }
-        # )
-        if storeXarray:
-            mieEfficenciesDataArray.loc[
-                dict(ri=ri, diameter=diameter, mie="qext")
-            ] = qext
-            mieEfficenciesDataArray.loc[
-                dict(ri=ri, diameter=diameter, mie="qsca")
-            ] = qsca
-            mieEfficenciesDataArray.loc[
-                dict(ri=ri, diameter=diameter, mie="qabs")
-            ] = qabs
-            mieEfficenciesDataArray.loc[dict(ri=ri, diameter=diameter, mie="g")] = g
-            mieEfficenciesDataArray.loc[dict(ri=ri, diameter=diameter, mie="qpr")] = qpr
-            # mieEfficenciesDataArray.loc[
-            #     dict(ri=ri, diameter=diameter, mie="qback")
-            # ] = qback
-            # mieEfficenciesDataArray.loc[
-            #     dict(ri=ri, diameter=diameter, mie="qratio")
-            # ] = qratio
-        else:
-            mieEfficencies.append(
-                {
-                    "ri": ri,
-                    "diameter": diameter,
-                    "qext": qext,
-                    "qsca": qsca,
-                    "qabs": qabs,
-                }
-            )
+# figRI, opt = plt.subplots(1, 1, figsize=(6, 6))
+# opt.plot(waves, fSplineN(waves), "-k", label="refractive index (n)")
+# opt.plot(waves, fSplineK(waves), ":k", label="extinction coefficient (k)")
+# opt.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
+# opt.set_ylabel("Complex Refractive Index", fontsize=fontSizeLarge, fontweight="bold")
+# legend = opt.legend(loc="upper left", fontsize=fontSizeLegend)
+# opt.set_xlim([360, 830])
+# opt.set_xticks(np.array([400, 500, 600, 700, 800]))
+# opt.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
+# opt.set_ylim([0, 5.2])
+# opt.set_yticks(np.array([0, 1, 2, 3, 4, 5]))
+# opt.set_yticklabels(np.array([0, 1, 2, 3, 4, 5]), fontsize=fontSizeLarge)
+# if savefigureFlag:
+#     figRI.savefig("RI.png", dpi=figureDPI)
 
-        # sizeDistribution = single_gauss_func(
-        #     sizeDistributionDiameterBins, 10, diameter, diameter_stdev
-        # )
-        # for index in range(waves.shape[0]):
-        #     bext, bsca, babs, G, bpr, bback, bratio = ps.Mie_SD(
-        #         m[index],
-        #         waves[index],
-        #         sizeDistributionDiameterBins,
-        #         sizeDistribution,
-        #         nMedium=ri,
-        #         asDict=False,
-        #     )
-        #     bextArray[index] = bext
-        # RGB, HSV, LAB, XYZ, rgb, rat, RGBg = absorbanceToTristim(
-        #     waves, bextArray / scaleFactorPoly, Yr, gammaFlag=True
-        # )
-        # lmax = waves[(waves > 450) & (waves < 800)][
-        #     np.argmax(qext[(waves > 450) & (waves < 800)])
-        # ]
-        # colorDataPoly.append(
-        #     {
-        #         "lmax": lmax,
-        #         "ri": ri,
-        #         "diameter": diameter,
-        #         "R": RGB[0],
-        #         "G": RGB[1],
-        #         "B": RGB[2],
-        #         "H": HSV[0],
-        #         "S": HSV[1],
-        #         "V": HSV[2],
-        #         "L*": LAB[0],
-        #         "a*": LAB[1],
-        #         "b*": LAB[2],
-        #         "r": rgb[0],
-        #         "g": rgb[1],
-        #         "b": rgb[2],
-        #         "R/G": rat[0],
-        #         "R/B": rat[1],
-        #         "G/B": rat[2],
-        #         "Rg": RGBg[0],
-        #         "Gg": RGBg[1],
-        #         "Bg": RGBg[2],
-        #     }
-        # )
-
-dfColorMono = pd.DataFrame(colorDataMono)
-dfColorMono = dfColorMono[
-    [
-        "ri",
-        "diameter",
-        "R",
-        "G",
-        "B",
-        "H",
-        "S",
-        "V",
-        "L*",
-        "a*",
-        "b*",
-        "r",
-        "g",
-        "b",
-        "R/G",
-        "R/B",
-        "G/B",
-        "Rg",
-        "Gg",
-        "Bg",
-        "lmax",
-    ]
-]
-# dfColorMono=dfColorMono[['ri','diameter','R','G','B','r','g','b','Rg','Gg','Bg']]
-if not (storeXarray):
-    dfmieEfficencies = pd.DataFrame(mieEfficencies)
-
-# now = datetime.datetime.now()
-# writer = pd.ExcelWriter("ModelingSpectra" + now.strftime("%m-%d-%Yat%H-%M") + ".xlsx")
-# workbook = writer.book
-# dfColorMono.to_excel(writer, "ModelingResultsMono", index=False)
-# writer.save()
-# if len(colorDataPoly) > 0:
-#     dfColorPoly = pd.DataFrame(colorDataPoly)
-#     dfColorPoly = dfColorPoly[
-#         [
-#             "ri",
-#             "diameter",
-#             "R",
-#             "G",
-#             "B",
-#             "H",
-#             "S",
-#             "V",
-#             "L*",
-#             "a*",
-#             "b*",
-#             "r",
-#             "g",
-#             "b",
-#             "R/G",
-#             "R/B",
-#             "G/B",
-#             "Rg",
-#             "Gg",
-#             "Bg",
-#             "lmax",
-#         ]
-#     ]
-
-rcParams["font.family"] = "sans-serif"
-rcParams["font.sans-serif"] = ["Arial"]
-
-fontSizeLarge = 14
-fontSizeLargest = 18
-fontSizeSmall = 12
-fontSizeLegend = 12
-
-figColor, cie = plt.subplots(1, 1, figsize=(6, 6))
-cie.plot(waves, CIEX, "r", label="CIE X")
-cie.plot(waves, CIEY, "g", label="CIE Y")
-cie.plot(waves, CIEZ, "b", label="CIE Z")
-cie.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
-cie.set_ylabel("Response", fontsize=fontSizeLarge, fontweight="bold")
-legend = cie.legend(loc="upper right", fontsize=fontSizeLegend)
-cie.set_xlim([360, 830])
-cie.set_ylim([0, 2])
-cie.set_yticks(np.array([0, 0.5, 1, 1.5, 2]))
-cie.set_yticklabels(np.array([0, 0.5, 1, 1.5, 2]), fontsize=fontSizeLarge)
-cie.set_xticks(np.array([400, 500, 600, 700, 800]))
-cie.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
-if savefigureFlag:
-    figColor.savefig("CIE_XYZ.png", dpi=figureDPI)
-
-figIll, ill = plt.subplots(1, 1, figsize=(6, 6))
-ill.plot(waves, illum, "k", label="D65 illuminant")
-ill.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
-ill.set_ylabel("Intensity", fontsize=fontSizeLarge, fontweight="bold")
-legend = ill.legend(loc="upper right", fontsize=fontSizeLegend)
-ill.set_xlim([360, 830])
-ill.set_xticks(np.array([400, 500, 600, 700, 800]))
-ill.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
-ill.set_ylim([0, 120])
-ill.set_yticks(np.array([0, 25, 50, 75, 100]))
-ill.set_yticklabels(np.array([0, 25, 50, 75, 100]), fontsize=fontSizeLarge)
-if savefigureFlag:
-    figIll.savefig("D65.png", dpi=figureDPI)
-
-figRI, opt = plt.subplots(1, 1, figsize=(6, 6))
-opt.plot(waves, fSplineN(waves), "-k", label="refractive index (n)")
-opt.plot(waves, fSplineK(waves), ":k", label="extinction coefficient (k)")
-opt.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
-opt.set_ylabel("Complex Refractive Index", fontsize=fontSizeLarge, fontweight="bold")
-legend = opt.legend(loc="upper left", fontsize=fontSizeLegend)
-opt.set_xlim([360, 830])
-opt.set_xticks(np.array([400, 500, 600, 700, 800]))
-opt.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
-opt.set_ylim([0, 5.2])
-opt.set_yticks(np.array([0, 1, 2, 3, 4, 5]))
-opt.set_yticklabels(np.array([0, 1, 2, 3, 4, 5]), fontsize=fontSizeLarge)
-if savefigureFlag:
-    figRI.savefig("RI.png", dpi=figureDPI)
-
-figExt, ext = plt.subplots(1, 1, figsize=(6, 6))
-ris = np.array([1.33])
-diameters = np.array([115, 100, 80, 60, 35])
-mie = "qext"
-for diameter in diameters:
-    for ri in ris:
-        if storeXarray:
-            signal = mieEfficenciesDataArray.loc[
-                dict(ri=ri, diameter=diameter, mie=mie)
-            ].values
-        else:
-            signal = dfmieEfficencies[
-                (dfmieEfficencies["ri"] == ri)
-                & (dfmieEfficencies["diameter"] == diameter)
-            ][mie].values[0]
-        dfBool = (dfColorMono["diameter"] == diameter) & (dfColorMono["ri"] == ri)
-        color = dfColorMono[dfBool][["Rg", "Gg", "Bg"]].values
-        ext.plot(waves, signal, label=str(diameter) + " nm", color=color[0, :])
-ext.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
-ext.set_ylabel(r"Q$\mathbf{_{ext}}$", fontsize=fontSizeLarge, fontweight="bold")
-legend = ext.legend(loc="upper left", fontsize=fontSizeLegend)
-ext.set_xlim([360, 830])
-ext.set_xticks(np.array([400, 500, 600, 700, 800]))
-ext.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
-# ext.set_ylim([0, 0.5])
-# ext.set_yticks(np.array([0,.1,.2,.3,.4,.5]))
-# ext.set_yticklabels(np.array([0,.1,.2,.3,.4,.5]),fontsize = fontSizeLarge)
-if savefigureFlag:
-    figExt.savefig("Au_Ext.png", dpi=figureDPI)
+# figExt, ext = plt.subplots(1, 1, figsize=(6, 6))
+# ris = np.array([1.33])
+# diameters = np.array([115, 100, 80, 60, 35])
+# mie = "qext"
+# for diameter in diameters:
+#     for ri in ris:
+#         if storeXarray:
+#             signal = mieEfficenciesDataArray.loc[
+#                 dict(ri=ri, diameter=diameter, mie=mie)
+#             ].values
+#         else:
+#             signal = dfmieEfficencies[
+#                 (dfmieEfficencies["ri"] == ri)
+#                 & (dfmieEfficencies["diameter"] == diameter)
+#             ][mie].values[0]
+#         dfBool = (dfColorMono["diameter"] == diameter) & (dfColorMono["ri"] == ri)
+#         color = dfColorMono[dfBool][["Rg", "Gg", "Bg"]].values
+#         ext.plot(waves, signal, label=str(diameter) + " nm", color=color[0, :])
+# ext.set_xlabel("Wavelength (nm)", fontsize=fontSizeLarge, fontweight="bold")
+# ext.set_ylabel(r"Q$\mathbf{_{ext}}$", fontsize=fontSizeLarge, fontweight="bold")
+# legend = ext.legend(loc="upper left", fontsize=fontSizeLegend)
+# ext.set_xlim([360, 830])
+# ext.set_xticks(np.array([400, 500, 600, 700, 800]))
+# ext.set_xticklabels(np.array([400, 500, 600, 700, 800]), fontsize=fontSizeLarge)
+# # ext.set_ylim([0, 0.5])
+# # ext.set_yticks(np.array([0,.1,.2,.3,.4,.5]))
+# # ext.set_yticklabels(np.array([0,.1,.2,.3,.4,.5]),fontsize = fontSizeLarge)
+# if savefigureFlag:
+#     figExt.savefig("Au_Ext.png", dpi=figureDPI)
