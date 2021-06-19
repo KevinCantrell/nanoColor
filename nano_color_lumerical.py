@@ -233,7 +233,8 @@ m = fSplineN(waves) + 1j * fSplineK(waves)
 
 fabsorbance=interp1d(dfLumerical["wavelength"],dfLumerical["T"], kind="cubic")
 absorbance=fabsorbance(waves)
-absorbance=absorbance/np.max(absorbance)
+scaleFactor=5e-14
+absorbance=absorbance/scaleFactor
 RGB, HSV, LAB, XYZ, rgb, rat, RGBg = absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True)
 #color = dfColorMono[dfBool][["Rg", "Gg", "Bg"]].values
 plt.plot(waves,absorbance,color=RGBg)
