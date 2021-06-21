@@ -173,13 +173,9 @@ def ShiftHOriginToValue(hue, maxHue, newOrigin, direction="cw"):
         hue = maxHue - hue
     return hue
 
-
-
-
 root = tk.Tk()
 root.withdraw()
 root.wm_attributes('-topmost', 1)
-#file_path = askopenfilename(initialdir=filePathImage,filetypes=[('image files', '*.jpg | *.jpeg | *.png'),('video files', '*.mp4 | *.mkv | *.avi | *.MOV'),('all files', '.*')])
 file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files', '.*')])
 
 file_pathSplit = os.path.split(file_path)
@@ -207,6 +203,12 @@ dfLumerical["S"+polarization]=dfFile[" Y"]
 dfLumerical["E"+polarization]=dfLumerical["A"+polarization]+dfLumerical["S"+polarization]
 dfLumerical["T"]=np.mean([dfLumerical["E0"],dfLumerical["E90"]],axis=0)   
 waveIncrement=np.floor(np.min(np.abs(np.diff(dfLumerical["wavelength"]))))
+if np.min(dfLumerical["wavelength"])>360:
+    dfPad=dfLumerical[dfLumerical["wavelength"]==np.min(dfLumerical["wavelength"])].copy()
+    for wavePad in np.arange(360.0, np.min(dfLumerical["wavelength"]), waveIncrement ):
+        dfPad["wavelength"]=wavePad
+        dfLumerical=dfLumerical.append(dfPad)
+          
 waveMin=np.max([np.min(dfLumerical["wavelength"]),360])
 waveMax=np.min([np.max(dfLumerical["wavelength"]),830])
 waves = np.arange(waveMin, waveMax+waveIncrement, waveIncrement)
