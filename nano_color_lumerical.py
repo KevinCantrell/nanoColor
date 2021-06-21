@@ -208,7 +208,11 @@ if np.min(dfLumerical["wavelength"])>360:
     for wavePad in np.arange(360.0, np.min(dfLumerical["wavelength"]), waveIncrement ):
         dfPad["wavelength"]=wavePad
         dfLumerical=dfLumerical.append(dfPad)
-          
+if np.max(dfLumerical["wavelength"])<830:
+    dfPad=dfLumerical[dfLumerical["wavelength"]==np.max(dfLumerical["wavelength"])].copy()
+    for wavePad in np.arange(np.max(dfLumerical["wavelength"]), 830, waveIncrement ):
+        dfPad["wavelength"]=wavePad
+        dfLumerical=dfLumerical.append(dfPad)
 waveMin=np.max([np.min(dfLumerical["wavelength"]),360])
 waveMax=np.min([np.max(dfLumerical["wavelength"]),830])
 waves = np.arange(waveMin, waveMax+waveIncrement, waveIncrement)
