@@ -49,7 +49,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import rcParams
 from scipy.interpolate import interp1d
-
+import re
 import nanocolor
 
 import tkinter as tk
@@ -181,8 +181,12 @@ file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files'
 file_pathSplit = os.path.split(file_path)
 file_dir=file_pathSplit[0]
 file_file=file_pathSplit[1]
+
+ri=re.findall(r"[-+]?\d*\.\d+", file_file)[0]
+polarization=re.findall('\(\d*?\)', file_file)[0][1:-1]
+#polarization=str(file_file[file_file.find("(")+1:file_file.find(")")])
+
 dfLumerical=pd.DataFrame()
-polarization=str(file_file[file_file.find("(")+1:file_file.find(")")])
 file_open=file_dir+r"/"+file_file[:file_file.find("(")]+"("+polarization+").txt"
 dfFile=pd.read_csv(file_open, nrows=100)
 dfLumerical["wavelength"]=dfFile["lambda"]*1e9
