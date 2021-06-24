@@ -184,7 +184,7 @@ file_file=file_pathSplit[1]
 
 ri=re.findall(r"[-+]?\d*\.\d+", file_file)[0]
 polarization=re.findall('\(\d*?\)', file_file)[0][1:-1]
-#polarization=str(file_file[file_file.find("(")+1:file_file.find(")")])
+polarization=str(file_file[file_file.find("(")+1:file_file.find(")")])
 
 dfLumerical=pd.DataFrame()
 file_open=file_dir+r"/"+file_file[:file_file.find("(")]+"("+polarization+").txt"
@@ -247,8 +247,8 @@ scaleFactor=5e-14
 absorbance=absorbance/scaleFactor
 RGB, HSV, LAB, XYZ, rgb, rat, RGBg = absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True)
 #color = dfColorMono[dfBool][["Rg", "Gg", "Bg"]].values
-plt.plot(waves,absorbance,color=RGBg)
-
+plt.plot(waves,absorbance,color=RGBg,label=ri)
+plt.legend()
 
 
 
