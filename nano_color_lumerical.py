@@ -329,6 +329,23 @@ dfSummary = dfSummary["value"]
 dfSummary.reset_index(inplace=True)
 dfSummary.to_excel(os.path.join(startpath, 'Lumerical_Data_Summary.xlsx'),sheet_name="ColorSummary")
 
+
+activeColorSpectrum=['red','green','blue','cyan','grey','black','black','magenta','yellow','salmon','lightseagreen','skyblue','gold','mediumorchid','darkcyan','darkred','darkgreen','darkblue','black','black','black']
+
+for folder in folders:
+    fig,axes=plt.subplots(7,3)
+    channelIndex=0
+    refIndex=np.array(ris)
+    refIndex=refIndex.astype(float)
+
+    for cc in range(7):
+        for pt in range (3):
+            dta=xrDataSummary.loc[dict(folder=folder,channel=channels[channelIndex])].values
+            axes[cc,pt].plot(refIndex,dta,'o',color=activeColorSpectrum[channelIndex])
+            channelIndex=channelIndex+1
+
+
+
 #dfRaw = xrDataArray.loc[dict(polarization='m',signalType='E')].to_dataframe('value')
 #dfRaw = dfRaw["value"]
 #dfRaw.reset_index(inplace=True)
