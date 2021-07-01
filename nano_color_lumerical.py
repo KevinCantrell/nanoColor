@@ -40,31 +40,27 @@ Created on Wed Sep 12 20:11:19 2018
 # https://pymiescatt.readthedocs.io/en/latest/index.html
 # http://cvrl.ioo.ucl.ac.uk/index.htm
 
-import math
-import sys
+#import math
+#import sys
 import os
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import rcParams
+#from matplotlib import rcParams
 from scipy.interpolate import interp1d
 import re
-import nanocolor
-
+#import nanocolor
+import xlsxwriter
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
-from tkinter.filedialog import asksaveasfilename
+from tkinter.filedialog import askdirectory
+#from tkinter.filedialog import asksaveasfilename
+import xarray as xr
+from scipy.optimize import curve_fit
 
 figureDPI = 72
 savefigureFlag = True
-
-if sys.version_info >= (3, 0):
-    import xarray as xr
-
-    storeXarray = True
-else:
-    storeXarray = False
 
 # http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 XYZtolRGB = np.array(
@@ -75,12 +71,12 @@ XYZtolRGB = np.array(
     ]
 )
 
-
-def single_gauss_func(x, a, x0, sigma):
-    gauss = np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
-    normal_gauss = a / np.sum(gauss) * gauss
-    return normal_gauss
-
+# defines a single Gaussian function
+def gaussian(x, mu, sigma,
+             amp):  # this defines a function with the paramaters x=wavelength, mu=peak center, sigma=peak width, amp=peak height
+    # Note that x data MUST be the first argument when defining a function that will be used with CurveFit
+    y = (amp / np.sqrt(2 * np.pi * sigma ** 2)) * np.exp((-(x - mu) ** 2) / (2 * sigma ** 2))
+    return y
 
 def absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True):
     pixel = np.zeros((1, 1, 3), dtype=np.float32)
@@ -108,10 +104,7 @@ def absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True):
         rgb[0] = RGBg[0] / np.sum(RGBg)
         rgb[1] = RGBg[1] / np.sum(RGBg)
         rgb[2] = RGBg[2] / np.sum(RGBg)
-        rat = np.zeros((RGBg.shape))
-        rat[0] = RGBg[0] / RGBg[1]
-        rat[1] = RGBg[0] / RGBg[2]
-        rat[2] = RGBg[1] / RGBg[2]
+
     else:
         HSV = cv2.cvtColor(RGB, cv2.COLOR_RGB2HSV)[0, 0, :]
         LAB = cv2.cvtColor(RGB, cv2.COLOR_RGB2LAB)[0, 0, :]
@@ -121,18 +114,13 @@ def absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True):
         rgb[0] = RGB[0] / np.sum(RGB)
         rgb[1] = RGB[1] / np.sum(RGB)
         rgb[2] = RGB[2] / np.sum(RGB)
-        rat = np.zeros((RGB.shape))
-        rat[0] = RGB[0] / RGB[1]
-        rat[1] = RGB[0] / RGB[2]
-        rat[2] = RGB[1] / RGB[2]
     HSV[0] = ShiftHOriginToValue(HSV[0], 360, 360.0 / 3, direction="ccw")
     HSV[0] = HSV[0] / 360.0
     LAB[0] = LAB[0] / 100.0
     LAB[1] = (LAB[1] + 128) / 255.0
     LAB[2] = (LAB[2] + 128) / 255.0
     RGBg = np.rint(RGBg * 255) / 255.0
-    return RGB, HSV, LAB, XYZ, rgb, rat, RGBg
-
+    return RGB, HSV, LAB, XYZ, rgb, RGBg
 
 def absorbanceToRGB(waves, absorbance, Yr, gammaFlag=True):
     XYZ = np.zeros((3), dtype=np.float32)
@@ -162,7 +150,6 @@ def absorbanceToRGB(waves, absorbance, Yr, gammaFlag=True):
     RGBg = np.rint(RGBg * 255) / 255.0
     return RGB, XYZ, rgb, RGBg
 
-
 def ShiftHOriginToValue(hue, maxHue, newOrigin, direction="cw"):
     shifthsv = np.copy(hue).astype("float")
     shiftAmount = maxHue - newOrigin
@@ -173,64 +160,128 @@ def ShiftHOriginToValue(hue, maxHue, newOrigin, direction="cw"):
         hue = maxHue - hue
     return hue
 
-root = tk.Tk()
-root.withdraw()
-root.wm_attributes('-topmost', 1)
-file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files', '.*')])
+def GetFilesToProcess():
+    root = tk.Tk()
+    root.withdraw()
+    root.wm_attributes('-topmost', 1)
 
-file_pathSplit = os.path.split(file_path)
-file_dir=file_pathSplit[0]
-file_file=file_pathSplit[1]
+    
+    # the following line lets the user select a file that can be processed later
+    #file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files', '.*')])
+    startpath = askdirectory()
+    
+    # the following block of code lets the user choose whether to process ONLY the file selected during the askopenfilename (Option 1)
+    # or whether to also process all other files in that directory (option 2)
+    # or whether to also process all other files in that directory AND all subdirectories (option 3)
+    mode = input('root is : ' + startpath + '\n' + '\n' + 'Do you want to process one polarization pair in this folder (1), all files in this directory (2), or all files in this directory and all subdirectories (3)?')  # asks user which files to process
+    filestoprocess = []  # initializes "files to process" as an empty list. We can then add files to process to this list based on option selected by user
+    folders=set([])
+    if mode == "1":
+        file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files', '.*')],initialdir=startpath)
+        filestoprocess.append(file_path)  # only file processed will be the file selected during askopenfilename
+        folders.add(os.path.basename(startpath))
+    if mode == "2":
+        folders.add(os.path.basename(startpath))
+        for filename in os.listdir(startpath):  # gets all the filenames in the directory
+            if filename[-3:] == "txt":  # if last 3 characters in filename are csv, then do the next line
+                filestoprocess.append(os.path.join(startpath,filename))  # joins the directory to the filename to create a filepath, then adds that filepath to the "files to process" list
+    if mode == "3":
+        for (dirpath, dirnames, filenames) in os.walk(startpath):  # os.walk walks through the directory AND all subdirectories where a given file is stored; dirpath dirnames filenames lists all files in the directory and subdirectories
+            for dirname in dirnames:
+                folders.add(dirname)
+            for filename in filenames:
+                if filename[-3:] == "txt":  # if last 3 characters in filename are csv, then do the next line
+                    filestoprocess.append(os.path.join(os.path.normpath(dirpath), filename))
+    return(startpath,list(folders),filestoprocess)
 
-ri=re.findall(r"[-+]?\d*\.\d+", file_file)[0]
-polarization=re.findall('\(\d*?\)', file_file)[0][1:-1]
-polarization=str(file_file[file_file.find("(")+1:file_file.find(")")])
+# creating workbook
+startpath,folders,filestoprocess=GetFilesToProcess()
+workbook = xlsxwriter.Workbook(os.path.join(startpath, 'Lumerical_Data_Summary.xlsx'))
 
+# adding worksheets with names
+rawData = workbook.add_worksheet('Raw Data')
+condensedData = workbook.add_worksheet('Condensed Data')
+summaryData = workbook.add_worksheet('Summary Data')
+sensitivityData = workbook.add_worksheet('Sensitivity')
 dfLumerical=pd.DataFrame()
-file_open=file_dir+r"/"+file_file[:file_file.find("(")]+"("+polarization+").txt"
-dfFile=pd.read_csv(file_open, nrows=100)
-dfLumerical["wavelength"]=dfFile["lambda"]*1e9
-dfLumerical["A"+polarization]=dfFile[" Y"]
-dfFile=pd.read_csv(file_path, skiprows=103, nrows=100)
-dfLumerical["S"+polarization]=dfFile[" Y"]
-dfLumerical["E"+polarization]=dfLumerical["A"+polarization]+dfLumerical["S"+polarization]
-if polarization=="0":
-    polarization="90"
-else:
-    polarization="0"
-file_open=file_dir+r"/"+file_file[:file_file.find("(")]+"("+polarization+").txt"
-dfFile=pd.read_csv(file_open, nrows=100)
-dfLumerical["wavelength"]=dfFile["lambda"]*1e9
-dfLumerical["A"+polarization]=dfFile[" Y"]
-dfFile=pd.read_csv(file_path, skiprows=103, nrows=100)
-dfLumerical["S"+polarization]=dfFile[" Y"]
-dfLumerical["E"+polarization]=dfLumerical["A"+polarization]+dfLumerical["S"+polarization]
-dfLumerical["T"]=np.mean([dfLumerical["E0"],dfLumerical["E90"]],axis=0)   
-waveIncrement=np.floor(np.min(np.abs(np.diff(dfLumerical["wavelength"]))))
-if np.min(dfLumerical["wavelength"])>360:
-    dfPad=dfLumerical[dfLumerical["wavelength"]==np.min(dfLumerical["wavelength"])].copy()
-    for wavePad in np.arange(360.0, np.min(dfLumerical["wavelength"]), waveIncrement ):
-        dfPad["wavelength"]=wavePad
-        dfLumerical=dfLumerical.append(dfPad)
-if np.max(dfLumerical["wavelength"])<830:
-    dfPad=dfLumerical[dfLumerical["wavelength"]==np.max(dfLumerical["wavelength"])].copy()
-    for wavePad in np.arange(np.max(dfLumerical["wavelength"]), 830, waveIncrement ):
-        dfPad["wavelength"]=wavePad
-        dfLumerical=dfLumerical.append(dfPad)
-waveMin=np.max([np.min(dfLumerical["wavelength"]),360])
-waveMax=np.min([np.max(dfLumerical["wavelength"]),830])
-waves = np.arange(waveMin, waveMax+waveIncrement, waveIncrement)
+
+ris=set([])
+polarizations=set([])
+waves=set([])
+for file in filestoprocess:
+    parentFolder=os.path.basename(os.path.dirname(file))
+    #parentFolder=parentFolder.replace(" ", "_")
+    ri=re.findall(r"[-+]?\d*\.\d+", file)[0]
+    polarization=re.findall('\(\d*?\)', file)[0][1:-1]
+    ris.add(ri)
+    polarizations.add(polarization)
+#file_open=file_dir+r"/"+file[:file.find("(")]+"("+polarization+").txt"
+    dfFile=pd.read_csv(file, nrows=100)
+    baseLabel=parentFolder+":"+"ri_"+ri+"_p_"+polarization+"_"
+    dfLumerical[baseLabel+"l"]=dfFile["lambda"]*1e9
+    waves.add(tuple(dfFile["lambda"]*1e9))
+    dfLumerical[baseLabel+"A"]=dfFile[" Y"]
+    dfFile=pd.read_csv(file, skiprows=103, nrows=100)
+    dfLumerical[baseLabel+"S"]=dfFile[" Y"]
+    dfLumerical[baseLabel+"E"]=dfLumerical[baseLabel+"A"]+dfLumerical[baseLabel+"S"]
+ris=list(ris)
+polarizations=list(polarizations)
+polarizations.append('m')
+waves=list(waves)
+waveIncrement=np.ceil(np.max(np.abs(np.diff(waves))))
+for wave,index in zip(waves,range(len(waves))): 
+    waves[index]=np.array(wave)
+    smallestWaveIncrement=np.floor(np.min(np.abs(np.diff(waves[index]))))
+    if smallestWaveIncrement<waveIncrement:
+        waveIncrement=smallestWaveIncrement
+waveMin=360
+waveMax=830
+wavelengths = np.arange(waveMin, waveMax+waveIncrement, waveIncrement)
+xrDataArray = xr.DataArray(
+    dims=("folder", "ri", "polarization", "signalType", "signal"),
+    coords={
+        "folder" : folders,
+        "ri": ris,
+        "polarization": polarizations,
+#        "wavelength": wavelengths,
+        "signalType": ["A", "S", "E"],
+        "signal": np.zeros(len(wavelengths)),
+    },
+)
+
+for (columnName, columnData) in dfLumerical.iteritems():
+    #print('Colunm Name : ', columnName)
+    if columnName[-1:]!="l":
+        folder=columnName[:columnName.find(":")]
+        ri=columnName[columnName.find("ri_")+3:columnName.find("_p")]
+        polarization=columnName[columnName.find("p_")+2:-2]
+        signalType=columnName[-1:]
+        baseLabel=folder+":"+"ri_"+ri+"_p_"+polarization+"_"   
+        wavesIn=np.array(dfLumerical[baseLabel+"l"])
+        dataIn=np.array(columnData.values)
+        if np.min(wavesIn)>360:
+            wavesIn=np.append(wavesIn,360)
+            dataIn=np.append(dataIn,0)
+        if np.max(wavesIn)<830:
+            wavesIn=np.append(wavesIn,830)
+            dataIn=np.append(dataIn,0)
+        functionData=interp1d(wavesIn,dataIn, kind="cubic")
+#        functionData=interp1d(wavesIn,dataIn, kind="linear")
+        dataOut=functionData(wavelengths)
+        xrDataArray.loc[dict(folder=folder,ri=ri,polarization=polarization,signalType=signalType)]=dataOut
+xrDataArray.loc[dict(polarization='m')]=xrDataArray.mean(dim="polarization")    
+
 colorDataFrame = pd.read_excel("data/all_1nm_data.xls", skiprows=63)
 fCIEX = interp1d(colorDataFrame.values[:, 0], colorDataFrame.values[:, 5], kind="cubic")
 fCIEY = interp1d(colorDataFrame.values[:, 0], colorDataFrame.values[:, 6], kind="cubic")
 fCIEZ = interp1d(colorDataFrame.values[:, 0], colorDataFrame.values[:, 7], kind="cubic")
 fD65 = interp1d(colorDataFrame.values[:, 0], colorDataFrame.values[:, 2], kind="cubic")
-CIEX = fCIEX(waves)
-CIEY = fCIEY(waves)
-CIEZ = fCIEZ(waves)
-D65 = fD65(waves)
+CIEX = fCIEX(wavelengths)
+CIEY = fCIEY(wavelengths)
+CIEZ = fCIEZ(wavelengths)
+D65 = fD65(wavelengths)
 illum = D65
-Yr = np.trapz(CIEY * illum, waves)
+Yr = np.trapz(CIEY * illum, wavelengths)
 nDataFrame = pd.read_csv("data/Johnson.csv", skiprows=0, nrows=49)
 kDataFrame = pd.read_csv("data/Johnson.csv", skiprows=50, nrows=49)
 fSplineN = interp1d(
@@ -239,18 +290,48 @@ fSplineN = interp1d(
 fSplineK = interp1d(
     kDataFrame.values[:, 0] * 1000, kDataFrame.values[:, 1], kind="cubic"
 )
-m = fSplineN(waves) + 1j * fSplineK(waves)
+m = fSplineN(wavelengths) + 1j * fSplineK(wavelengths)
 
-fabsorbance=interp1d(dfLumerical["wavelength"],dfLumerical["T"], kind="cubic")
-absorbance=fabsorbance(waves)
-scaleFactor=5e-14
-absorbance=absorbance/scaleFactor
-RGB, HSV, LAB, XYZ, rgb, rat, RGBg = absorbanceToTristim(waves, absorbance, Yr, gammaFlag=True)
-#color = dfColorMono[dfBool][["Rg", "Gg", "Bg"]].values
-plt.plot(waves,absorbance,color=RGBg,label=ri)
-plt.legend()
+channels=['Red','Green','Blue','Hue','Saturation','Value','CIE L*','CIE a*','CIE b*','X','Y','Z','r chromaticity','g chromaticity','b chromaticity','Red gamma','Green gamma','Blue gamma','lmax interpolated','lmax raw','lmax gauss fit']
+xrDataSummary = xr.DataArray(
+    dims=("folder", "ri", "channel"),
+    coords={
+        "folder" : folders,
+        "ri": ris,
+        "channel": channels,
+    },
+    )
+for folder in folders:
+    fig,ax=plt.subplots()
+    for ri in ris:
+        absorbance=xrDataArray.loc[dict(folder=folder,ri=ri,polarization='m',signalType='E')]
+        scaleFactor=5e-14
+        absorbance=absorbance/scaleFactor
+        #RGB, HSV, LAB, XYZ, rgb, RGBg = absorbanceToTristim(wavelengths, absorbance, Yr, gammaFlag=True)
+        tristims = absorbanceToTristim(wavelengths, absorbance, Yr, gammaFlag=True)
+        channelIndex=0
+        for cc in range(6):
+            for pt in range (3):
+                xrDataSummary.loc[dict(folder=folder,ri=ri,channel=channels[channelIndex])]=tristims[cc][pt]
+                channelIndex=channelIndex+1
+        baseLabel=folder+":"+"ri_"+ri   
+        wavesIn=np.array(dfLumerical[baseLabel+"_p_0_l"])
+        dataIn=np.mean([dfLumerical[baseLabel+"_p_0_E"],dfLumerical[baseLabel+"_p_90_E"]],axis=0)
+        rangeBoolIntens = (dataIn >= 0.50 * np.max(dataIn)) 
+        popt, pcov = curve_fit(gaussian, wavesIn[rangeBoolIntens], dataIn[rangeBoolIntens], p0=[wavesIn[np.argmax(dataIn)], 30, 87])
+        xrDataSummary.loc[dict(folder=folder,ri=ri,channel='lmax interpolated')]=wavelengths[np.argmax(np.array(absorbance))]
+        xrDataSummary.loc[dict(folder=folder,ri=ri,channel='lmax raw')]=wavesIn[np.argmax(dataIn)]
+        xrDataSummary.loc[dict(folder=folder,ri=ri,channel='lmax gauss fit')]=popt[0]
+        ax.plot(wavelengths,absorbance,color=tristims[5],label=ri)
+    plt.legend()
+dfSummary = xrDataSummary.to_dataframe('value').unstack()
+dfSummary = dfSummary["value"]
+dfSummary.reset_index(inplace=True)
+dfSummary.to_excel(os.path.join(startpath, 'Lumerical_Data_Summary.xlsx'),sheet_name="ColorSummary")
 
-
+#dfRaw = xrDataArray.loc[dict(polarization='m',signalType='E')].to_dataframe('value')
+#dfRaw = dfRaw["value"]
+#dfRaw.reset_index(inplace=True)
 
 # rcParams["font.family"] = "sans-serif"
 # rcParams["font.sans-serif"] = ["Arial"]
