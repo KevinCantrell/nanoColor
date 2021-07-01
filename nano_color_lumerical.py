@@ -333,7 +333,7 @@ dfSummary.to_excel(os.path.join(startpath, 'Lumerical_Data_Summary.xlsx'),sheet_
 activeColorSpectrum=['red','green','blue','cyan','grey','black','black','magenta','yellow','salmon','lightseagreen','skyblue','gold','mediumorchid','darkcyan','darkred','darkgreen','darkblue','black','black','black']
 
 for folder in folders:
-    fig,axes=plt.subplots(7,3)
+    fig,axes=plt.subplots(7,3,sharex=True, gridspec_kw=dict(wspace=0, hspace=0))
     channelIndex=0
     refIndex=np.array(ris)
     refIndex=refIndex.astype(float)
@@ -342,6 +342,7 @@ for folder in folders:
         for pt in range (3):
             dta=xrDataSummary.loc[dict(folder=folder,channel=channels[channelIndex])].values
             axes[cc,pt].plot(refIndex,dta,'o',color=activeColorSpectrum[channelIndex])
+            axes[cc,pt].axes.get_yaxis().set_visible(False)
             channelIndex=channelIndex+1
 
 
