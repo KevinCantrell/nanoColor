@@ -191,6 +191,7 @@ def GetFilesToProcess():
                 folders.add(dirname)
             for filename in filenames:
                 if filename[-3:] == "txt":  # if last 3 characters in filename are csv, then do the next line
+
                     filestoprocess.append(os.path.join(os.path.normpath(dirpath), filename))
     return(startpath,list(folders),filestoprocess)
 
@@ -209,6 +210,33 @@ ris=set([])
 polarizations=set([])
 waves=set([])
 for file in filestoprocess:
+    fileLines = open(file, 'r')
+    lines = fileLines.readlines()
+    s1=0
+    s2=0
+    e1=0
+    e2=0
+    count = 0
+    stage=0
+    flgContent=False
+    for line in lines:
+        if (line=='\n') and (flgContent==True):
+            stage=stage+1
+            flgContent=False
+            if stage==2:
+                e1 = count-1
+            elif stage==4:
+                e2 = count-1
+        elif (line!='\n') and (flgContent!=True):
+            stage=stage+1
+            flgContent=True
+            if stage==1:
+                s1 = count
+            elif stage==3:
+                s2 = count
+        count=count+1
+    fileLines.close()
+
     parentFolder=os.path.basename(os.path.dirname(file))
     #parentFolder=parentFolder.replace(" ", "_")
     ri=re.findall(r"[-+]?\d*\.\d+", file)[0]
@@ -216,24 +244,25 @@ for file in filestoprocess:
     ris.add(ri)
     polarizations.add(polarization)
 #file_open=file_dir+r"/"+file[:file.find("(")]+"("+polarization+").txt"
-    dfFile=pd.read_csv(file, nrows=100)
+    dfFile=pd.read_csv(file, skiprows=s1, nrows=e1-s1)
     baseLabel=parentFolder+":"+"ri_"+ri+"_p_"+polarization+"_"
     dfLumerical[baseLabel+"l"]=dfFile["lambda"]*1e9
     waves.add(tuple(dfFile["lambda"]*1e9))
     dfLumerical[baseLabel+"A"]=dfFile[" Y"]
-    dfFile=pd.read_csv(file, skiprows=103, nrows=100)
+    dfFile=pd.read_csv(file, skiprows=s2, nrows=e2-s2)
     dfLumerical[baseLabel+"S"]=dfFile[" Y"]
     dfLumerical[baseLabel+"E"]=dfLumerical[baseLabel+"A"]+dfLumerical[baseLabel+"S"]
 ris=list(ris)
 polarizations=list(polarizations)
 polarizations.append('m')
 waves=list(waves)
-waveIncrement=np.ceil(np.max(np.abs(np.diff(waves))))
-for wave,index in zip(waves,range(len(waves))): 
-    waves[index]=np.array(wave)
-    smallestWaveIncrement=np.floor(np.min(np.abs(np.diff(waves[index]))))
-    if smallestWaveIncrement<waveIncrement:
-        waveIncrement=smallestWaveIncrement
+# waveIncrement=np.ceil(np.max(np.abs(np.diff(waves))))
+# for wave,index in zip(waves,range(len(waves))): 
+#     waves[index]=np.array(wave)
+#     smallestWaveIncrement=np.floor(np.min(np.abs(np.diff(waves[index]))))
+#     if smallestWaveIncrement<waveIncrement:
+#         waveIncrement=smallestWaveIncrement
+waveIncrement=1.0
 waveMin=360
 waveMax=830
 wavelengths = np.arange(waveMin, waveMax+waveIncrement, waveIncrement)
