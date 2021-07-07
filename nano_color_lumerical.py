@@ -175,6 +175,7 @@ def GetFilesToProcess():
     # or whether to also process all other files in that directory AND all subdirectories (option 3)
     mode = input('root is : ' + startpath + '\n' + '\n' + 'Do you want to process one polarization pair in this folder (1), all files in this directory (2), or all files in this directory and all subdirectories (3)?')  # asks user which files to process
     filestoprocess = []  # initializes "files to process" as an empty list. We can then add files to process to this list based on option selected by user
+    #folders2=set([])
     folders=set([])
     if mode == "1":
         file_path = askopenfilename(filetypes=[('lumerical files', '*.txt'),('all files', '.*')],initialdir=startpath)
@@ -187,11 +188,11 @@ def GetFilesToProcess():
                 filestoprocess.append(os.path.join(startpath,filename))  # joins the directory to the filename to create a filepath, then adds that filepath to the "files to process" list
     if mode == "3":
         for (dirpath, dirnames, filenames) in os.walk(startpath):  # os.walk walks through the directory AND all subdirectories where a given file is stored; dirpath dirnames filenames lists all files in the directory and subdirectories
-            for dirname in dirnames:
-                folders.add(dirname)
+            #for dirname in dirnames:
+            #    folders2.add(dirname)
             for filename in filenames:
                 if filename[-3:] == "txt":  # if last 3 characters in filename are csv, then do the next line
-
+                    folders.add(os.path.basename(dirpath))
                     filestoprocess.append(os.path.join(os.path.normpath(dirpath), filename))
     return(startpath,list(folders),filestoprocess)
 
