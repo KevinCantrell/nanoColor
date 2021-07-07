@@ -216,6 +216,7 @@ for file in filestoprocess:
     ris.add(ri)
     polarizations.add(polarization)
 #file_open=file_dir+r"/"+file[:file.find("(")]+"("+polarization+").txt"
+#need to read file
     dfFile=pd.read_csv(file, nrows=100)
     baseLabel=parentFolder+":"+"ri_"+ri+"_p_"+polarization+"_"
     dfLumerical[baseLabel+"l"]=dfFile["lambda"]*1e9
