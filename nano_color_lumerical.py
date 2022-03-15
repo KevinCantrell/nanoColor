@@ -306,7 +306,7 @@ for folder in folders:
     fig,ax=plt.subplots()
     for ri in ris:
         absorbance=xrDataArray.loc[dict(folder=folder,ri=ri,polarization='m',signalType='E')]
-        scaleFactor=5e-14
+        scaleFactor=1e-15
         absorbance=absorbance/scaleFactor
         #RGB, HSV, LAB, XYZ, rgb, RGBg = absorbanceToTristim(wavelengths, absorbance, Yr, gammaFlag=True)
         tristims = absorbanceToTristim(wavelengths, absorbance, Yr, gammaFlag=True)
@@ -323,8 +323,10 @@ for folder in folders:
         xrDataSummary.loc[dict(folder=folder,ri=ri,channel='lmax interpolated')]=wavelengths[np.argmax(np.array(absorbance))]
         xrDataSummary.loc[dict(folder=folder,ri=ri,channel='lmax raw')]=wavesIn[np.argmax(dataIn)]
         xrDataSummary.loc[dict(folder=folder,ri=ri,channel='lmax gauss fit')]=popt[0]
-        ax.plot(wavelengths,absorbance,color=tristims[5],label=ri)
+        ax.plot(wavelengths,absorbance*scaleFactor,color=tristims[5],label="RI "+ri)
     plt.legend()
+    ax.set_ylabel("Extinction")
+    ax.set_xlabel("Wavelength (nm)")
 dfSummary = xrDataSummary.to_dataframe('value').unstack()
 dfSummary = dfSummary["value"]
 dfSummary.reset_index(inplace=True)
