@@ -302,11 +302,21 @@ xrDataSummary = xr.DataArray(
         "channel": channels,
     },
     )
+
+maxExtinction=-1
+for folder in folders:
+    for ri in ris:
+        absorbance=xrDataArray.loc[dict(folder=folder,ri=ri,polarization='m',signalType='E')]
+        if np.max(absorbance)>maxExtinction:
+            maxExtinction=np.max(absorbance)
+scaleFactor=maxExtinction
+
+
 for folder in folders:
     fig,ax=plt.subplots()
     for ri in ris:
         absorbance=xrDataArray.loc[dict(folder=folder,ri=ri,polarization='m',signalType='E')]
-        scaleFactor=1e-15
+        #scaleFactor=1e-13
         absorbance=absorbance/scaleFactor
         #RGB, HSV, LAB, XYZ, rgb, RGBg = absorbanceToTristim(wavelengths, absorbance, Yr, gammaFlag=True)
         tristims = absorbanceToTristim(wavelengths, absorbance, Yr, gammaFlag=True)
@@ -317,7 +327,10 @@ for folder in folders:
                 channelIndex=channelIndex+1
         baseLabel=folder+":"+"ri_"+ri   
         wavesIn=np.array(dfLumerical[baseLabel+"_p_0_l"])
-        dataIn=np.mean([dfLumerical[baseLabel+"_p_0_E"],dfLumerical[baseLabel+"_p_90_E"]],axis=0)
+        if baseLabel+"_p_90_E" in dfLumerical.columns:
+            dataIn=np.mean([dfLumerical[baseLabel+"_p_0_E"],dfLumerical[baseLabel+"_p_90_E"]],axis=0)
+        else:
+            dataIn=dfLumerical[baseLabel+"_p_0_E"]
         rangeBoolIntens = (dataIn >= 0.50 * np.max(dataIn)) 
         popt, pcov = curve_fit(gaussian, wavesIn[rangeBoolIntens], dataIn[rangeBoolIntens], p0=[wavesIn[np.argmax(dataIn)], 30, 87])
         xrDataSummary.loc[dict(folder=folder,ri=ri,channel='lmax interpolated')]=wavelengths[np.argmax(np.array(absorbance))]
