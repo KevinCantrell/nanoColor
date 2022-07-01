@@ -620,7 +620,7 @@ if (mode == '3') | (mode == 3):
             if (filename[-3:]=='csv') & (processSpectra):
                 dir2=os.path.normpath(dirpath)
                 folder=dir2[dir2.rfind('\\')+1:]
-                if folder=='Transmission Spectra':
+                if (folder=='Transmission Spectra') | (folder=='Spectra'):
                     filesToProcessSpectrum.append(os.path.join(os.path.normpath(dirpath), filename))        
 
 spectraData=[]
