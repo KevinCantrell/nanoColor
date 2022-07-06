@@ -601,7 +601,7 @@ root = tk.Tk()
 root.withdraw()
 root.wm_attributes('-topmost', 1)
 
-print('Please select a folder')
+print('Please select a file')
     
 #allows user to pick file
 file_path = askopenfilename() 
@@ -761,12 +761,13 @@ if processSpectra:
         smoothedDataAbsorbance = y[smoothedMaxAbsIndex]
     
         ri = 0
-        gen=os.path.dirname(os.path.dirname(filename))[0:4]
+        mainfolder=os.path.split(os.path.split(os.path.split(filename)[0])[0])[1]
+        gen=mainfolder[0:3]
         #first 3 characters of folder name that contains photos needs to be the RI medium
         sensorMedium=baseName[0:3]
-        slide=os.path.dirname(os.path.dirname(filename))[6:7]
+        slide=mainfolder[6]
         #last 6 characters of folder name containing ALL data needs to be the date
-        prep=os.path.dirname(os.path.dirname(filename))[-6:]
+        prep=mainfolder[-6:]
     
         
         riValues=riValues_old
