@@ -768,6 +768,8 @@ if processSpectra:
         slide=mainfolder[6]
         #last 6 characters of folder name containing ALL data needs to be the date
         prep=mainfolder[-6:]
+        sam=mainfolder[8:14]
+        surface=mainfolder[15:18]
     
         
         riValues=riValues_old
@@ -1252,11 +1254,14 @@ if processPhotos:
     #            ri=os.path.basename(fileName)[-7:-4]
     #            slide=os.path.basename(fileName)[os.path.basename(fileName).lower().find('sample')+6:os.path.basename(fileName).lower().find('sample')+7]
                 ri = 0
-                gen=os.path.dirname(os.path.dirname(os.path.dirname(fileName)))[0:4]
+                mainfolder=os.path.split(os.path.split(os.path.split(os.path.split(filename)[0])[0])[0])[1]
+                gen=mainfolder[0:3]
                 sensorMedium=os.path.dirname(fileName)[-3:]
-                slide=os.path.dirname(os.path.dirname(os.path.dirname(fileName)))[6:7]
+                slide=mainfolder[6]
                 #last 10 characters of folder name should be the date of experiment
-                prep=os.path.dirname(os.path.dirname(os.path.dirname(fileName)))[-6:]
+                prep=mainfolder[-6:]
+                sam=mainfolder[8:14]
+                surface=mainfolder[15:18]
     
                 dir2=os.path.dirname(fileName)
                 folder=dir2[dir2.rfind('\\')+1:]
