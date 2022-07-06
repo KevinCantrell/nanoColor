@@ -725,7 +725,7 @@ if processSpectra:
         #calculates Gaussian Fit to upper 25% of spectrum
         #popt does parameter optimization for the gaussian function and specifies the fit will be for the x and y data from rangeBoolIntens
         #with initial parameter guesses for mu, sigma, amp of 520, 30, and 87
-        popt, pcov = curve_fit(gaussian,dfSpectrum['Wavelength'][rangeBoolIntens],dfSpectrum['Absorbance'][rangeBoolIntens],p0=[600,30,87])
+        popt, pcov = curve_fit(gaussian,dfSpectrum['Wavelength'][rangeBoolIntens],dfSpectrum['Absorbance'][rangeBoolIntens],p0=[dfSpectrum['Wavelength'][rangeBoolIntens].iloc[np.argmax(dfSpectrum['Absorbance'][rangeBoolIntens])],30,87])
         #this creates a gaussian curve (y data) using the optimized parameters determined using popt above
         GaussData=gaussian(dfSpectrum['Wavelength'],popt[0],popt[1],popt[2])
         #axGauss.plot(dfSpectrum['Wavelength'][rangeBool],GaussData[rangeBool],color=RGBg)
