@@ -86,6 +86,7 @@ riValues_220628 = [1.0000, 1.3325, 1.3480, 1.3617, 1.3735, 1.3844, 1.3954]
 riValues_220701A = [1.0000, 1.3328, 1.3473, 1.3593, 1.3708, 1.3805, 1.3907]
 riValues_220701D = [1.0000, 1.3329, 1.3475, 1.3597, 1.3716, 1.3821, 1.3892]
 riValues_220705 = [1.0000, 1.3326, 1.3469, 1.3595, 1.3710, 1.3811, 1.3890]
+riValues_220706 = [1.0000, 1.3329, 1.3478, 1.3587, 1.3710, 1.3808, 1.3899]
 
 
 #average of G9 G-I
@@ -230,6 +231,9 @@ def PeakFind(SegmentX,SegmentY,peakHeightThreshold=0):
     #peakY=peakY[peakHeightBool]
     #valleyMean=valleyMean[peakHeightBool]
 #    return peakX,peakY,peakY-valleyMean
+    if peakY.size==0:
+        peakY=[np.max(SegmentY)]
+        peakX=[SegmentX[np.argmax(SegmentY)]]
     return peakX,peakY
 
 def absorbanceToTristim(waves,absorbance,Yr,gammaFlag=False):
@@ -736,6 +740,7 @@ if processSpectra:
         
         #Cantrell
         peakdata=PeakFind(np.array(dfSpectrum['Wavelength'][rangeBool]),np.array(dfSpectrum['Absorbance'][rangeBool]),peakHeightThreshold=0)
+            
         derMaxAbsIndex = np.argmax(peakdata[1])
         derDataLambda = peakdata[0][derMaxAbsIndex]
         derDataAbsorbance = peakdata[1][derMaxAbsIndex]
@@ -773,6 +778,8 @@ if processSpectra:
     
         
         riValues=riValues_old
+        if prep=='220706':
+            riValues=riValues_220706
         if prep=='220705':
             riValues=riValues_220705
         if prep=='220701' and slide=='A' or 'B' or 'C':
@@ -1269,6 +1276,8 @@ if processPhotos:
                 slide=folder[7:]
                 
                 riValues=riValues_old
+                if prep=='220706':
+                    riValues=riValues_220706
                 if prep=='220705':
                     riValues=riValues_220705
                 if prep=='220701' and slide=='A' or 'B' or 'C':
