@@ -720,7 +720,6 @@ if processSpectra:
         maxVals = dfSpectrum.loc[dfSpectrum['Absorbance'][rangeBool].idxmax()]
         if maxVals['Absorbance']>largestAbsorbance:
             largestAbsorbance=maxVals['Absorbance']
-        maxAbs = maxVals['Absorbance']
         
         #truncates absorbance array to only the upper 25% of absorbance values
         rangeBoolIntens=(dfSpectrum['Absorbance']>=0.75*maxVals['Absorbance'])&(dfSpectrum['Wavelength']>=480)&(dfSpectrum['Wavelength']<=840)
@@ -834,8 +833,8 @@ if processSpectra:
             ri = riValues[5]
         if sensorMedium  == '50%':
             ri = riValues[6]
-        spectraData.append({'medium':sensorMedium,'filename': filename,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'R':RGB[0],'G':RGB[1],'B':RGB[2],'H':HSV[0],'S':HSV[1],'V':HSV[2],'L*':LAB[0],'a*':LAB[1],'b*':LAB[2],'r':rgb[0],'g':rgb[1],'b':rgb[2],'gaussLambda':gaussLambda,'gaussSigma':gaussSigma,'Max Abs':smoothedDataAbsorbance,'smoothedDataLambda':smoothedDataLambda,'derDataLambda':derDataLambda,'type':gen,'ri':ri,'slide':slide,'prep':prep})
-        rawSpectra.append({'medium':sensorMedium,'filename': filename,'type':gen,'ri':ri,'slide':slide,'prep':prep,'spectra':dfSpectrum['Absorbance'][rangeBool].values})
+        spectraData.append({'medium':sensorMedium,'filename': filename,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'R':RGB[0],'G':RGB[1],'B':RGB[2],'H':HSV[0],'S':HSV[1],'V':HSV[2],'L*':LAB[0],'a*':LAB[1],'b*':LAB[2],'r':rgb[0],'g':rgb[1],'b':rgb[2],'gaussLambda':gaussLambda,'gaussSigma':gaussSigma,'Max Abs':smoothedDataAbsorbance,'smoothedDataLambda':smoothedDataLambda,'derDataLambda':derDataLambda,'type':gen,'ri':ri,'slide':slide,'prep':prep,'SAM':sam,'Surface':surface})
+        rawSpectra.append({'medium':sensorMedium,'filename': filename,'type':gen,'SAM':sam,'Surface':surface,'ri':ri,'slide':slide,'prep':prep,'spectra':dfSpectrum['Absorbance'][rangeBool].values})
 if processPhotos:
     colorDataMean=[]
     colorDataMost=[]
@@ -1263,7 +1262,7 @@ if processPhotos:
     #            ri=os.path.basename(fileName)[-7:-4]
     #            slide=os.path.basename(fileName)[os.path.basename(fileName).lower().find('sample')+6:os.path.basename(fileName).lower().find('sample')+7]
                 ri = 0
-                mainfolder=os.path.split(os.path.split(os.path.split(os.path.split(filename)[0])[0])[0])[1]
+                mainfolder=os.path.split(os.path.split(os.path.split(filename)[0])[0])[1]
                 gen=mainfolder[0:3]
                 sensorMedium=os.path.dirname(fileName)[-3:]
                 slide=mainfolder[6]
@@ -1274,8 +1273,6 @@ if processPhotos:
     
                 dir2=os.path.dirname(fileName)
                 folder=dir2[dir2.rfind('\\')+1:]
-                gen=folder[:6]
-                slide=folder[7:]
                 
                 riValues=riValues_old
                 if prep=='220706':
@@ -1334,10 +1331,10 @@ if processPhotos:
                     ri = riValues[6]
     #            colorDataMean.append({'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'R':ParameterStats[0,0,recNum],'G':ParameterStats[1,0,recNum],'B':ParameterStats[2,0,recNum],'H':ParameterStats[3,0,recNum],'S':ParameterStats[4,0,recNum],'V':ParameterStats[5,0,recNum],'L*':ParameterStats[6,0,recNum],'a*':ParameterStats[7,0,recNum],'b*':ParameterStats[8,0,recNum],'r':ParameterStats[9,0,recNum],'g':ParameterStats[10,0,recNum],'b':ParameterStats[11,0,recNum],'G/R':ParameterStats[12,0,recNum],'B/R':ParameterStats[13,0,recNum],'G/B':ParameterStats[14,0,recNum],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'type':os.path.dirname(fileName)[os.path.dirname(fileName).find('Photos')+7:os.path.dirname(fileName).find('Photos')+10],'ri':os.path.dirname(fileName)[-3:],'slide':os.path.dirname(fileName)[os.path.dirname(fileName).lower().find('slide')+6:os.path.dirname(fileName).lower().find('slide')+7]})
     #            colorDataMost.append({'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'R':ParameterStats[0,2,recNum],'G':ParameterStats[1,2,recNum],'B':ParameterStats[2,2,recNum],'H':ParameterStats[3,2,recNum],'S':ParameterStats[4,2,recNum],'V':ParameterStats[5,2,recNum],'L*':ParameterStats[6,2,recNum],'a*':ParameterStats[7,2,recNum],'b*':ParameterStats[8,2,recNum],'r':ParameterStats[9,2,recNum],'g':ParameterStats[10,2,recNum],'b':ParameterStats[11,2,recNum],'G/R':ParameterStats[12,2,recNum],'B/R':ParameterStats[13,2,recNum],'G/B':ParameterStats[14,2,recNum],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'type':os.path.dirname(fileName)[os.path.dirname(fileName).find('Photos')+7:os.path.dirname(fileName).find('Photos')+10],'ri':os.path.dirname(fileName)[-3:],'slide':os.path.dirname(fileName)[os.path.dirname(fileName).lower().find('slide')+6:os.path.dirname(fileName).lower().find('slide')+7]})
-                colorDataMean.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,0,recNum],'G':ParameterStats[1,0,recNum],'B':ParameterStats[2,0,recNum],'H':ParameterStats[3,0,recNum],'S':ParameterStats[4,0,recNum],'V':ParameterStats[5,0,recNum],'L*':ParameterStats[6,0,recNum],'a*':ParameterStats[7,0,recNum],'b*':ParameterStats[8,0,recNum],'r':ParameterStats[9,0,recNum],'g':ParameterStats[10,0,recNum],'b':ParameterStats[11,0,recNum],'Ra':ParameterStats[12,0,recNum],'Ga':ParameterStats[13,0,recNum],'Ba':ParameterStats[14,0,recNum],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep})
-                colorDataMost.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,2,recNum],'G':ParameterStats[1,2,recNum],'B':ParameterStats[2,2,recNum],'H':ParameterStats[3,2,recNum],'S':ParameterStats[4,2,recNum],'V':ParameterStats[5,2,recNum],'L*':ParameterStats[6,2,recNum],'a*':ParameterStats[7,2,recNum],'b*':ParameterStats[8,2,recNum],'r':ParameterStats[9,2,recNum],'g':ParameterStats[10,2,recNum],'b':ParameterStats[11,2,recNum],'Ra':ParameterStats[12,2,recNum],'Ga':ParameterStats[13,2,recNum],'Ba':ParameterStats[14,2,recNum],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep})
-                colorDataMeanOriginal.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,0,recNum+1],'G':ParameterStats[1,0,recNum+1],'B':ParameterStats[2,0,recNum+1],'H':ParameterStats[3,0,recNum+1],'S':ParameterStats[4,0,recNum+1],'V':ParameterStats[5,0,recNum+1],'L*':ParameterStats[6,0,recNum+1],'a*':ParameterStats[7,0,recNum+1],'b*':ParameterStats[8,0,recNum+1],'r':ParameterStats[9,0,recNum+1],'g':ParameterStats[10,0,recNum+1],'b':ParameterStats[11,0,recNum+1],'Ra':ParameterStats[12,0,recNum+1],'Ga':ParameterStats[13,0,recNum+1],'Ba':ParameterStats[14,0,recNum+1],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep})
-                colorDataMostOriginal.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,2,recNum+1],'G':ParameterStats[1,2,recNum+1],'B':ParameterStats[2,2,recNum+1],'H':ParameterStats[3,2,recNum+1],'S':ParameterStats[4,2,recNum+1],'V':ParameterStats[5,2,recNum+1],'L*':ParameterStats[6,2,recNum+1],'a*':ParameterStats[7,2,recNum+1],'b*':ParameterStats[8,2,recNum+1],'r':ParameterStats[9,2,recNum+1],'g':ParameterStats[10,2,recNum+1],'b':ParameterStats[11,2,recNum+1],'Ra':ParameterStats[12,2,recNum+1],'Ga':ParameterStats[13,2,recNum+1],'Ba':ParameterStats[14,2,recNum+1],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep})
+                colorDataMean.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,0,recNum],'G':ParameterStats[1,0,recNum],'B':ParameterStats[2,0,recNum],'H':ParameterStats[3,0,recNum],'S':ParameterStats[4,0,recNum],'V':ParameterStats[5,0,recNum],'L*':ParameterStats[6,0,recNum],'a*':ParameterStats[7,0,recNum],'b*':ParameterStats[8,0,recNum],'r':ParameterStats[9,0,recNum],'g':ParameterStats[10,0,recNum],'b':ParameterStats[11,0,recNum],'Ra':ParameterStats[12,0,recNum],'Ga':ParameterStats[13,0,recNum],'Ba':ParameterStats[14,0,recNum],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep,'SAM':sam,'Surface':surface})
+                colorDataMost.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,2,recNum],'G':ParameterStats[1,2,recNum],'B':ParameterStats[2,2,recNum],'H':ParameterStats[3,2,recNum],'S':ParameterStats[4,2,recNum],'V':ParameterStats[5,2,recNum],'L*':ParameterStats[6,2,recNum],'a*':ParameterStats[7,2,recNum],'b*':ParameterStats[8,2,recNum],'r':ParameterStats[9,2,recNum],'g':ParameterStats[10,2,recNum],'b':ParameterStats[11,2,recNum],'Ra':ParameterStats[12,2,recNum],'Ga':ParameterStats[13,2,recNum],'Ba':ParameterStats[14,2,recNum],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep,'SAM':sam,'Surface':surface})
+                colorDataMeanOriginal.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,0,recNum+1],'G':ParameterStats[1,0,recNum+1],'B':ParameterStats[2,0,recNum+1],'H':ParameterStats[3,0,recNum+1],'S':ParameterStats[4,0,recNum+1],'V':ParameterStats[5,0,recNum+1],'L*':ParameterStats[6,0,recNum+1],'a*':ParameterStats[7,0,recNum+1],'b*':ParameterStats[8,0,recNum+1],'r':ParameterStats[9,0,recNum+1],'g':ParameterStats[10,0,recNum+1],'b':ParameterStats[11,0,recNum+1],'Ra':ParameterStats[12,0,recNum+1],'Ga':ParameterStats[13,0,recNum+1],'Ba':ParameterStats[14,0,recNum+1],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep,'SAM':sam,'Surface':surface})
+                colorDataMostOriginal.append({'medium':sensorMedium,'filename': fileName,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'area':ParameterStats[15,0,recNum],'R':ParameterStats[0,2,recNum+1],'G':ParameterStats[1,2,recNum+1],'B':ParameterStats[2,2,recNum+1],'H':ParameterStats[3,2,recNum+1],'S':ParameterStats[4,2,recNum+1],'V':ParameterStats[5,2,recNum+1],'L*':ParameterStats[6,2,recNum+1],'a*':ParameterStats[7,2,recNum+1],'b*':ParameterStats[8,2,recNum+1],'r':ParameterStats[9,2,recNum+1],'g':ParameterStats[10,2,recNum+1],'b':ParameterStats[11,2,recNum+1],'Ra':ParameterStats[12,2,recNum+1],'Ga':ParameterStats[13,2,recNum+1],'Ba':ParameterStats[14,2,recNum+1],'Rw':rfactor,'Gw':gfactor,'Bw':bfactor,'Rl':Rr,'Gl':Gr,'Bl':Br,'type':gen,'ri':ri,'slide':slide,'prep':prep,'SAM':sam,'Surface':surface})
                 cv2.imwrite(os.path.dirname(fileName)+'/processed'+os.path.basename(fileName), img)
                 cv2.imshow('Result', img)
 
@@ -1354,7 +1351,7 @@ if (mode != '1') | (mode != 1):
 
     if processSpectra: 
         dfSpectraData=pd.DataFrame(spectraData)
-        dfSpectraData=dfSpectraData[['filename','cTime','prep','medium','type','slide','ri','gaussLambda','gaussSigma','Max Abs','smoothedDataLambda','derDataLambda','R','G','B','H','S','V','L*','a*','b*','r','g','b']]
+        dfSpectraData=dfSpectraData[['filename','cTime','prep','type','SAM','Surface','slide','medium','ri','gaussLambda','gaussSigma','Max Abs','smoothedDataLambda','derDataLambda','R','G','B','H','S','V','L*','a*','b*','r','g','b']]
         dfSpectraData.to_excel(writer,'Spectra_Values')
         dfSummarySpectraData=dfSpectraData.groupby(['type','ri','slide']).describe()
         #dfColorAllMean.to_excel(writer,'Color_Values_Mean')
@@ -1365,13 +1362,13 @@ if (mode != '1') | (mode != 1):
 
     if processPhotos:
         dfColorMean=pd.DataFrame(colorDataMean)
-        dfColorMean=dfColorMean[['filename','cTime','prep','medium','type','slide','area','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
+        dfColorMean=dfColorMean[['filename','cTime','prep','type','SAM','Surface','slide','area','medium','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
         dfColorMost=pd.DataFrame(colorDataMost)
-        dfColorMost=dfColorMost[['filename','cTime','prep','medium','type','slide','area','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
+        dfColorMost=dfColorMost[['filename','cTime','prep','type','SAM','Surface','slide','area','medium','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
         colorDataMeanOriginal=pd.DataFrame(colorDataMeanOriginal)
-        colorDataMeanOriginal=colorDataMeanOriginal[['filename','cTime','prep','medium','type','slide','area','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
+        colorDataMeanOriginal=colorDataMeanOriginal[['filename','cTime','prep','type','SAM','Surface','slide','area','medium','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
         colorDataMostOriginal=pd.DataFrame(colorDataMostOriginal)
-        colorDataMostOriginal=colorDataMostOriginal[['filename','cTime','prep','medium','type','slide','area','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
+        colorDataMostOriginal=colorDataMostOriginal[['filename','cTime','prep','type','SAM','Surface','slide','area','medium','ri','R','G','B','H','S','V','L*','a*','b*','r','g','b','Ra','Ga','Ba','Rw','Gw','Bw','Rl','Gl','Bl']]
         dfColorMean.to_excel(writer,'Color_Values_Mean')
         dfColorMost.to_excel(writer,'Color_Values_Most')
         colorDataMeanOriginal.to_excel(writer,'Color_Values_Mean_Original')
