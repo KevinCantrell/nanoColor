@@ -93,7 +93,7 @@ riValues_220706 = [1.0000, 1.3329, 1.3478, 1.3587, 1.3710, 1.3808, 1.3899]
 riValues_070519 =        [1.0000, 1.3313, 1.3464, 1.3621, 1.3805, 1.3899, 1.4206]
 
     
-lower_lim = np.array([0,0.06,0],dtype=np.float32)
+lower_lim = np.array([0,0.07,0],dtype=np.float32) #minimum saturation for sensor chip is 0.07
 #lower_lim = np.array([0,0.04,0],dtype=np.float32)
 upper_lim = np.array([360,1,1],dtype=np.float32)
 lower_lim_grey = np.array([0,0,0],dtype=np.float32)
@@ -777,7 +777,6 @@ if processSpectra:
         sam=mainfolder[8:14]
         surface=mainfolder[15:18]
     
-        
         riValues=riValues_old
         if prep=='220706':
             riValues=riValues_220706
@@ -835,6 +834,7 @@ if processSpectra:
             ri = riValues[6]
         spectraData.append({'medium':sensorMedium,'filename': filename,'cTime': cTime.strftime("%Y-%m-%d %H:%M:%S"),'R':RGB[0],'G':RGB[1],'B':RGB[2],'H':HSV[0],'S':HSV[1],'V':HSV[2],'L*':LAB[0],'a*':LAB[1],'b*':LAB[2],'r':rgb[0],'g':rgb[1],'b':rgb[2],'gaussLambda':gaussLambda,'gaussSigma':gaussSigma,'Max Abs':smoothedDataAbsorbance,'smoothedDataLambda':smoothedDataLambda,'derDataLambda':derDataLambda,'type':gen,'ri':ri,'slide':slide,'prep':prep,'SAM':sam,'Surface':surface})
         rawSpectra.append({'medium':sensorMedium,'filename': filename,'type':gen,'SAM':sam,'Surface':surface,'ri':ri,'slide':slide,'prep':prep,'spectra':dfSpectrum['Absorbance'][rangeBool].values})
+
 if processPhotos:
     colorDataMean=[]
     colorDataMost=[]
@@ -1262,7 +1262,7 @@ if processPhotos:
     #            ri=os.path.basename(fileName)[-7:-4]
     #            slide=os.path.basename(fileName)[os.path.basename(fileName).lower().find('sample')+6:os.path.basename(fileName).lower().find('sample')+7]
                 ri = 0
-                mainfolder=os.path.split(os.path.split(os.path.split(fileName)[0])[0])[1]
+                mainfolder=os.path.split(os.path.split(os.path.split(os.path.split(fileName)[0])[0])[0])[1]
                 gen=mainfolder[0:3]
                 sensorMedium=os.path.dirname(fileName)[-3:]
                 slide=mainfolder[6]
@@ -1425,11 +1425,11 @@ if (mode == '3') | (mode == 3):
                     slideColor='xkcd:black'            
                 activeColumn=1
                 dfSlide=dfGenPhoto[dfGenPhoto['slide']==slide]
-                for cc in range(5):
-                    for feature in range(3):
+                for cc in range(5): #5 different color channels (color spaces)
+                    for feature in range(3): #3 colors in each channel
                         axesSepPhoto[cc,feature].set_facecolor((0.7,0.7,0.7))
-                        axesSepPhoto[cc,feature].scatter(dfSlide['ri'],dfSlide.iloc[:,activeColumn+7],alpha=0.2,color=slideColor)
-                        fit=PolyReg(dfSlide['ri'],dfSlide.iloc[:,activeColumn+7],1)
+                        axesSepPhoto[cc,feature].scatter(dfSlide['ri'],dfSlide.iloc[:,activeColumn+9],alpha=0.2,color=slideColor)
+                        fit=PolyReg(dfSlide['ri'],dfSlide.iloc[:,activeColumn+9],1) #x, y, fit order
                         axesSepPhoto[cc,feature].plot(Xrange,fit['poly'](Xrange),'-',color=slideColor)
                         axesSepPhoto[cc,feature].set(ylabel=activeChannel[activeColumn])
                         fitDataSepPhoto.append({'gen':generation,'slide':slide,'cc':activeChannel[activeColumn],'slope': fit['coef'][0],'intercept': fit['coef'][1],'error in slope':fit['errors'][0],'error in intercept':fit['errors'][1],'n':fit['n'],'standard error in y':fit['sy'],'sensitivity':np.abs(fit['coef'][0]/fit['sy'])})
@@ -1447,8 +1447,8 @@ if (mode == '3') | (mode == 3):
             for cc in range(5):
                 for feature in range(3):
                     axesComboPhoto[cc,feature].set_facecolor((0.7,0.7,0.7))
-                    axesComboPhoto[cc,feature].scatter(dfGenPhoto['ri'],dfGenPhoto.iloc[:,activeColumn+7],alpha=0.2)
-                    fitCombo=PolyReg(dfGenPhoto['ri'],dfGenPhoto.iloc[:,activeColumn+7],1)
+                    axesComboPhoto[cc,feature].scatter(dfGenPhoto['ri'],dfGenPhoto.iloc[:,activeColumn+9],alpha=0.2)
+                    fitCombo=PolyReg(dfGenPhoto['ri'],dfGenPhoto.iloc[:,activeColumn+9],1)
                     axesComboPhoto[cc,feature].plot(Xrange,fitCombo['poly'](Xrange),'-')
                     AnnotateFit(fitCombo,axesComboPhoto[cc,feature],Arrow=False,xText=0.05,yText=0.50)
                     axesComboPhoto[cc,feature].set(ylabel=activeChannel[activeColumn])
@@ -1488,8 +1488,8 @@ if (mode == '3') | (mode == 3):
                 for cc in range(5):
                     for feature in range(3):
                         axesSepSpectrum[cc,feature].set_facecolor((0.7,0.7,0.7))
-                        axesSepSpectrum[cc,feature].scatter(dfSlide['ri'],dfSlide.iloc[:,activeColumn+7],alpha=0.2,color=slideColor)
-                        fit=PolyReg(dfSlide['ri'],dfSlide.iloc[:,activeColumn+7],1)
+                        axesSepSpectrum[cc,feature].scatter(dfSlide['ri'],dfSlide.iloc[:,activeColumn+9],alpha=0.2,color=slideColor)
+                        fit=PolyReg(dfSlide['ri'],dfSlide.iloc[:,activeColumn+9],1)
                         axesSepSpectrum[cc,feature].plot(Xrange,fit['poly'](Xrange),'-',color=slideColor)
                         axesSepSpectrum[cc,feature].set(ylabel=activeChannelSpectrum[activeColumn])
                         fitDataSepSpectrum.append({'gen':generation,'slide':slide,'cc':activeChannelSpectrum[activeColumn],'slope': fit['coef'][0],'intercept': fit['coef'][1],'error in slope':fit['errors'][0],'error in intercept':fit['errors'][1],'n':fit['n'],'standard error in y':fit['sy'],'sensitivity':np.abs(fit['coef'][0]/fit['sy']),'lmax_water':waterLmax.values[0]})
@@ -1509,8 +1509,8 @@ if (mode == '3') | (mode == 3):
             for cc in range(5):
                 for feature in range(3):
                     axesComboSpectrum[cc,feature].set_facecolor((0.7,0.7,0.7))
-                    axesComboSpectrum[cc,feature].scatter(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+7],alpha=0.2)
-                    fitCombo=PolyReg(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+7],1)
+                    axesComboSpectrum[cc,feature].scatter(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+9],alpha=0.2)
+                    fitCombo=PolyReg(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+9],1)
                     axesComboSpectrum[cc,feature].plot(Xrange,fitCombo['poly'](Xrange),'-')
                     AnnotateFit(fitCombo,axesComboSpectrum[cc,feature],Arrow=False,xText=0.05,yText=0.50)
                     axesComboSpectrum[cc,feature].set(ylabel=activeChannelSpectrum[activeColumn])
