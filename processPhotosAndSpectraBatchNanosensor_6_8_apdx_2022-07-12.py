@@ -93,7 +93,7 @@ riValues_220706 = [1.0000, 1.3329, 1.3478, 1.3587, 1.3710, 1.3808, 1.3899]
 riValues_070519 =        [1.0000, 1.3313, 1.3464, 1.3621, 1.3805, 1.3899, 1.4206]
 
     
-lower_lim = np.array([0,0.07,0],dtype=np.float32) #minimum saturation for sensor chip is 0.07
+lower_lim = np.array([0,0.03,0.6],dtype=np.float32) #minimum saturation for sensor chip is 0.07
 #lower_lim = np.array([0,0.04,0],dtype=np.float32)
 upper_lim = np.array([360,1,1],dtype=np.float32)
 lower_lim_grey = np.array([0,0,0],dtype=np.float32)
