@@ -1352,7 +1352,7 @@ if (mode != '1') | (mode != 1):
 
     if processSpectra: 
         dfSpectraData=pd.DataFrame(spectraData)
-        dfSpectraData=dfSpectraData[['filename','cTime','prep','type','SAM','Surface','slide','medium','ri','gaussLambda','gaussSigma','Max Abs','smoothedDataLambda','derDataLambda','R','G','B','H','S','V','L*','a*','b*','r','g','b']]
+        dfSpectraData=dfSpectraData[['filename','cTime','prep','type','SAM','Surface','slide','medium','ri','gaussSigma','Max Abs','gaussLambda','smoothedDataLambda','derDataLambda','R','G','B','H','S','V','L*','a*','b*','r','g','b']]
         dfSpectraData.to_excel(writer,'Spectra_Values')
         dfSummarySpectraData=dfSpectraData.groupby(['type','ri','slide']).describe()
         #dfColorAllMean.to_excel(writer,'Color_Values_Mean')
@@ -1488,8 +1488,8 @@ if (mode == '3') | (mode == 3):
                 for cc in range(5):
                     for feature in range(3):
                         axesSepSpectrum[cc,feature].set_facecolor((0.7,0.7,0.7))
-                        axesSepSpectrum[cc,feature].scatter(dfSlide['ri'],dfSlide.iloc[:,activeColumn+9],alpha=0.2,color=slideColor)
-                        fit=PolyReg(dfSlide['ri'],dfSlide.iloc[:,activeColumn+9],1)
+                        axesSepSpectrum[cc,feature].scatter(dfSlide['ri'],dfSlide.iloc[:,activeColumn+11],alpha=0.2,color=slideColor)
+                        fit=PolyReg(dfSlide['ri'],dfSlide.iloc[:,activeColumn+11],1)
                         axesSepSpectrum[cc,feature].plot(Xrange,fit['poly'](Xrange),'-',color=slideColor)
                         axesSepSpectrum[cc,feature].set(ylabel=activeChannelSpectrum[activeColumn])
                         fitDataSepSpectrum.append({'gen':generation,'slide':slide,'cc':activeChannelSpectrum[activeColumn],'slope': fit['coef'][0],'intercept': fit['coef'][1],'error in slope':fit['errors'][0],'error in intercept':fit['errors'][1],'n':fit['n'],'standard error in y':fit['sy'],'sensitivity':np.abs(fit['coef'][0]/fit['sy']),'lmax_water':waterLmax.values[0]})
@@ -1509,8 +1509,8 @@ if (mode == '3') | (mode == 3):
             for cc in range(5):
                 for feature in range(3):
                     axesComboSpectrum[cc,feature].set_facecolor((0.7,0.7,0.7))
-                    axesComboSpectrum[cc,feature].scatter(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+9],alpha=0.2)
-                    fitCombo=PolyReg(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+9],1)
+                    axesComboSpectrum[cc,feature].scatter(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+11],alpha=0.2)
+                    fitCombo=PolyReg(dfGenSpectrum['ri'],dfGenSpectrum.iloc[:,activeColumn+11],1)
                     axesComboSpectrum[cc,feature].plot(Xrange,fitCombo['poly'](Xrange),'-')
                     AnnotateFit(fitCombo,axesComboSpectrum[cc,feature],Arrow=False,xText=0.05,yText=0.50)
                     axesComboSpectrum[cc,feature].set(ylabel=activeChannelSpectrum[activeColumn])
