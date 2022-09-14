@@ -1484,7 +1484,7 @@ if (mode == '3') | (mode == 3):
                     slideColor='xkcd:black'   
                 activeColumn=0
                 dfSlide=dfGenSpectrum[dfGenSpectrum['slide']==slide]
-                waterLmax=dfSlide['gaussLambda'][dfSlide['medium']=='h20']
+                waterLmax=dfSlide['gaussLambda'][(dfSlide['medium']=='h20')|(dfSlide['medium']=='h2o')]
                 for cc in range(5):
                     for feature in range(3):
                         axesSepSpectrum[cc,feature].set_facecolor((0.7,0.7,0.7))
