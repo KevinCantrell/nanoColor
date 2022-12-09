@@ -105,7 +105,7 @@ for filename in filestoprocess:
     dfSpectrum=pd.read_csv(filename,skiprows=3,nrows=900,delimiter=',',header=None, index_col=False, names=['Wavelength','Absorbance'], dtype={'Wavelength':int,'Absorbance':np.float64} ,engine='python')
     #this creates a data file df called Spectrum from an original txt file where the first 13 rows are deleted, where the delimiter is a tab and there are no header names present, and assigns header names of wavelength and absorbance
     #dfSpectrum['Wavelength']=float(dfHead.loc['coefs_a0'].values[0])+float(dfHead.loc['coefs_a1'].values[0])*dfSpectrum.index+float(dfHead.loc['coefs_a2'].values[0])*dfSpectrum.index**2+float(dfHead.loc['coefs_a3'].values[0])*dfSpectrum.index**3
-
+    dfSpectrum=dfSpectrum.dropna(how="any")
     
     #truncates data to region of interest (the plasmonic peak region) based on wavelength
     rangeBool=(dfSpectrum['Wavelength']>=400)&(dfSpectrum['Wavelength']<=1000)
