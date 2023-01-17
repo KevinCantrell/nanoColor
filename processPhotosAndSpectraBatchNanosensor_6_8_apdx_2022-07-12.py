@@ -87,6 +87,15 @@ riValues_220701A = [1.0000, 1.3328, 1.3473, 1.3593, 1.3708, 1.3805, 1.3907]
 riValues_220701D = [1.0000, 1.3329, 1.3475, 1.3597, 1.3716, 1.3821, 1.3892]
 riValues_220705 = [1.0000, 1.3326, 1.3469, 1.3595, 1.3710, 1.3811, 1.3890]
 riValues_220706 = [1.0000, 1.3329, 1.3478, 1.3587, 1.3710, 1.3808, 1.3899]
+riValues_221006 = [1.0000, 1.3322, 1.3452, 1.3658, 1.3681, 1.3781, 1.3887]
+riValues_221013 = [1.0000, 1.3328, 1.3467, 1.3672, 1.3693, 1.3786, 1.3912]
+riValues_221027 = [1.0000, 1.3328, 1.3467, 1.3588, 1.3696, 1.3789, 1.3911]
+riValues_221103 = [1.0000, 1.3328, 1.3468, 1.3590, 1.3698, 1.3794, 1.3915]
+riValues_221117 = [1.0000, 1.3336, 1.3460, 1.3593, 1.3697, 1.3806, 1.3925]
+riValues_221201 = [1.0000, 1.3325, 1.3462, 1.3583, 1.3693, 1.3839, 1.3915]
+riValues_221208 = [1.0000, 1.3324, 1.3479, 1.3585, 1.3715, 1.3867, 1.3926]
+riValues_221216 = [1.0000, 1.3324, 1.3452, 1.3587, 1.3704, 1.3780, 1.3930]
+riValues_230114 = [1.0000, 1.3324, 1.3459, 1.3599, 1.3735, 1.3789, 1.3948]
 
 
 #average of G9 G-I
@@ -778,6 +787,26 @@ if processSpectra:
         surface=mainfolder[15:18]
     
         riValues=riValues_old
+        if prep=='220114':
+            riValues=riValues_220114
+        if prep=='221216':
+            riValues=riValues_221216
+        if prep=='221208':
+            riValues=riValues_2211208
+        if prep=='221201':
+            riValues=riValues_221201
+        if prep=='221117':
+            riValues=riValues_221117
+        if prep=='221103':
+            riValues=riValues_230114
+        if prep=='221027':
+            riValues=riValues_230114
+        if prep=='221013':
+            riValues=riValues_221216
+        if prep=='221006' and slide=='A':
+            riValues=riValues_221201
+        if prep=='221006' and slide=='B':
+                riValues=riValues_221208
         if prep=='220706':
             riValues=riValues_220706
         if prep=='220705':
@@ -1275,6 +1304,24 @@ if processPhotos:
                 folder=dir2[dir2.rfind('\\')+1:]
                 
                 riValues=riValues_old
+                if prep=='220114':
+                    riValues=riValues_220114
+                if prep=='221216':
+                    riValues=riValues_221216
+                if prep=='221208':
+                    riValues=riValues_2211208
+                if prep=='221201':
+                    riValues=riValues_221201
+                if prep=='221117':
+                    riValues=riValues_221117
+                if prep=='221103':
+                    riValues=riValues_221103
+                if prep=='221027':
+                    riValues=riValues_221027
+                if prep=='221013':
+                    riValues=riValues_221013
+                if prep=='221006':
+                    riValues=riValues_221006
                 if prep=='220706':
                     riValues=riValues_220706
                 if prep=='220705':
