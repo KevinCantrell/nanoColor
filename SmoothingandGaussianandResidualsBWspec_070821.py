@@ -70,7 +70,7 @@ smoothedDataSheet = workbook.add_worksheet('Smoothed Data')
 GaussDataSheet = workbook.add_worksheet('Gaussian Data')
 summaryStats = workbook.add_worksheet('Summary')
 #averages = workbook.add_worksheet('Avg and Stdev')
-# refractiveIndexSheet = workbook.add_worksheet('Refractive Index')
+refractiveIndexSheet = workbook.add_worksheet('Refractive Index')
 refractPlotSheet = workbook.add_worksheet('Refractive Index Plot')
 rawDataPlotSheet = workbook.add_worksheet('Raw Data Plot')
 smoothedDataPlotSheet = workbook.add_worksheet('Smoothed Data Plot')
@@ -90,7 +90,7 @@ colSum = 0
 #cols = 0
 
 # creates a figure to plot
-# fig,ax=plt.subplots()
+fig,ax=plt.subplots()
 
 # creates lists to store the values from each csv file, to be used at the end
 gauss_lam_max = []
@@ -263,10 +263,10 @@ for filename in filestoprocess:
         # averages.write(0, 18, 'Variance of smooth Intensity')
         
         # averages.write(0, 0 + 19, 'Sum of Square errors')
-        #    refractiveIndexSheet.write(rowSum, colSum, 'Medium')
-        #   refractiveIndexSheet.write(rowSum, colSum + 1, 'Refractive Index')
-        #    refractiveIndexSheet.write(rowSum, colSum + 2, 'Smoothed Lambda Max (nm)')
-        #     refractiveIndexSheet.write(rowSum, colSum + 3, 'Gaussian Lambda Max (nm)')
+        refractiveIndexSheet.write(rowSum, colSum, 'Medium')
+        refractiveIndexSheet.write(rowSum, colSum + 1, 'Refractive Index')
+        refractiveIndexSheet.write(rowSum, colSum + 2, 'Smoothed Lambda Max (nm)')
+        refractiveIndexSheet.write(rowSum, colSum + 3, 'Gaussian Lambda Max (nm)')
         rowSum += 1
     
 
@@ -296,22 +296,22 @@ for filename in filestoprocess:
     # dfResults.iloc[index,6]=statistics.stdev(dfResults['intensity'])
 
     # determining refractive index from the 7th - 10th characters in filename. Makes lowercase so that name is case-insensitive
-    #   refractiveIndexNum = 0
-    #  sensorMedium = baseName[7:10].lower()
-    #  if sensorMedium  == 'air':
-    #      refractiveIndexNum = 1.0000
-    #  if sensorMedium  == 'h20':
-    #      refractiveIndexNum = 1.3333
-    #   if sensorMedium  == '10%':
-    #       refractiveIndexNum = 1.3478
-    #   if sensorMedium  == '20%':
-    #        refractiveIndexNum = 1.3639
-    #   if sensorMedium  == '30%':
-    #       refractiveIndexNum = 1.3812
-    #    if sensorMedium  == '40%':
-    #       refractiveIndexNum = 1.3999
-    #   if sensorMedium  == '50%':
-    #     refractiveIndexNum = 1.4201
+    refractiveIndexNum = 0
+    sensorMedium = baseName[0:3].lower()
+    if sensorMedium  == 'air':
+          refractiveIndexNum = 1.0000
+    if sensorMedium  == 'h2o':
+          refractiveIndexNum = 1.3333
+    if sensorMedium  == '10%':
+           refractiveIndexNum = 1.3478
+    if sensorMedium  == '20%':
+            refractiveIndexNum = 1.3639
+    if sensorMedium  == '30%':
+           refractiveIndexNum = 1.3812
+    if sensorMedium  == '40%':
+           refractiveIndexNum = 1.3999
+    if sensorMedium  == '50%':
+         refractiveIndexNum = 1.4201
 
     # writes neccessary data into correct column
     summaryStats.write(rowSum, colSum, baseName)
@@ -327,21 +327,21 @@ for filename in filestoprocess:
     summaryStats.write(rowSum,colSum + 10, IntensityR)
     summaryStats.write(rowSum,colSum + 11, IntensityL)
     summaryStats.write(rowSum,colSum + 12, IntensityMultiple)
-    #  refractiveIndexSheet.write(rowSum, colSum + 0, sensorMedium)
-    #   refractiveIndexSheet.write(rowSum, colSum +1, refractiveIndexNum)
-    #   refractiveIndexSheet.write(rowSum, colSum + 2, smoothedDataLambda)
-    #   refractiveIndexSheet.write(rowSum, colSum + 3, popt[0])
+    refractiveIndexSheet.write(rowSum, colSum + 0, sensorMedium)
+    refractiveIndexSheet.write(rowSum, colSum +1, refractiveIndexNum)
+    refractiveIndexSheet.write(rowSum, colSum + 2, smoothedDataLambda)
+    refractiveIndexSheet.write(rowSum, colSum + 3, popt[0])
     rowSum += 1
     #rows +=1
     # adjusting column width for summaryStats, hardcoded RIP
     summaryStats.set_column(0, 30, 30)
-    # refractiveIndexSheet.set_column(0, 6, 25)
+    refractiveIndexSheet.set_column(0, 6, 25)
 
-    # ax.plot(dfSpectrum['Wavelength'], smoothedData, label = 'Smoothed Data')
-    # ax.plot(dfSpectrum['Wavelength'], dfSpectrum['Absorbance'], label = 'Raw Data')
+    ax.plot(dfSpectrum['Wavelength'], smoothedData, label = 'Smoothed Data')
+    ax.plot(dfSpectrum['Wavelength'], dfSpectrum['Absorbance'], label = 'Raw Data')
     # plots upper 25% of spectrum only
-    # fig,ax=plt.subplots()
-    # ax.plot(dfSpectrum['Wavelength'][rangeBoolIntens],dfSpectrum['Absorbance'][rangeBoolIntens])
+    fig,ax=plt.subplots()
+    ax.plot(dfSpectrum['Wavelength'][rangeBoolIntens],dfSpectrum['Absorbance'][rangeBoolIntens])
 
 # calculates the mean and standard deviation for gaussian lambda max and intensity values
 gauss_avg_lam_max = st.fmean(gauss_lam_max)
@@ -454,30 +454,30 @@ summaryStats.write(rowSum+1, colSum + 12, devIntensMult)
 
 
 # plotting lambdamax vs refractive index
-# refractPlot.add_series({
-#          'categories': ['Refractive Index', 2, 1, len(filestoprocess), 1],
-#          'values': ['Refractive Index', 2, 2, len(filestoprocess), 2]
-# })
+refractPlot.add_series({
+         'categories': ['Refractive Index', 2, 1, len(filestoprocess), 1],
+          'values': ['Refractive Index', 2, 2, len(filestoprocess), 2]
+ })
 
 # adjusting axis for refract plot
-# refractPlot.set_y_axis({
-#   'crossing': '-2',
-#    'major_gridlines': {
-#            'visible': False},
-#    'name': 'Lambda Max (nm)',
-#    'min': 500,
-#    'max': 580,
-#    'num_font': {'name': 'Calibri', 'size': 10, 'bold': True}
-# })
-# refractPlot.set_x_axis({
-#    'crossing': '-2',
-#    'major_gridlines': {
-#            'visible': False},
-#    'name': 'Refractive Index',
-#   'min': 0.90,
-#  'max': 1.5,
-# 'num_font': {'name': 'Calibri', 'size': 10, 'bold': True}
-# })
+refractPlot.set_y_axis({
+   'crossing': '-2',
+    'major_gridlines': {
+            'visible': False},
+    'name': 'Lambda Max (nm)',
+    'min': 500,
+    'max': 580,
+    'num_font': {'name': 'Calibri', 'size': 10, 'bold': True}
+ })
+refractPlot.set_x_axis({
+    'crossing': '-2',
+    'major_gridlines': {
+            'visible': False},
+    'name': 'Refractive Index',
+   'min': 0.90,
+  'max': 1.5,
+ 'num_font': {'name': 'Calibri', 'size': 10, 'bold': True}
+ })
 
 # adjusting axis for rawDataPlot
 rawDataPlot.set_y_axis({
@@ -542,7 +542,7 @@ GaussDataPlot.set_x_axis({
 # inserting charts
 rawDataPlotSheet.insert_chart('B1', rawDataPlot)
 smoothedDataPlotSheet.insert_chart('B1', smoothedDataPlot)
-# refractPlotSheet.insert_chart('B1', refractPlot)
+refractPlotSheet.insert_chart('B1', refractPlot)
 GaussDataPlotSheet.insert_chart('B1', GaussDataPlot)
 
 # closing workbook
