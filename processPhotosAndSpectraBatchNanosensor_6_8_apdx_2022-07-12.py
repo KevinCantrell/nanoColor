@@ -96,6 +96,9 @@ riValues_221201 = [1.0000, 1.3325, 1.3462, 1.3583, 1.3693, 1.3839, 1.3915]
 riValues_221208 = [1.0000, 1.3324, 1.3479, 1.3585, 1.3715, 1.3867, 1.3926]
 riValues_221216 = [1.0000, 1.3324, 1.3452, 1.3587, 1.3704, 1.3780, 1.3930]
 riValues_230114 = [1.0000, 1.3324, 1.3459, 1.3599, 1.3735, 1.3789, 1.3948]
+riValues_230323 = [1.0000, 1.3331, 1.3471, 1.3595, 1.3721, 1.3823, 1.3905]
+riValues_230327 = [1.0000, 1.3339, 1.3468, 1.3604, 1.3751, 1.3832, 1.3931]
+riValues_230404 = [1.0000, 1.3345, 1.3468, 1.3587, 1.3694, 1.3789, 1.3875]
 
 
 #average of G9 G-I
@@ -787,12 +790,18 @@ if processSpectra:
         surface=mainfolder[15:18]
     
         riValues=riValues_old
+        if prep=='230404':
+            riValues=riValues_230404
+        if prep=='230327':
+            riValues=riValues_230327
+        if prep=='230323':
+            riValues=riValues_230323
         if prep=='220114':
-            riValues=riValues_220114
+            riValues=riValues_230114
         if prep=='221216':
             riValues=riValues_221216
         if prep=='221208':
-            riValues=riValues_2211208
+            riValues=riValues_221208
         if prep=='221201':
             riValues=riValues_221201
         if prep=='221117':
@@ -1304,12 +1313,18 @@ if processPhotos:
                 folder=dir2[dir2.rfind('\\')+1:]
                 
                 riValues=riValues_old
+                if prep=='230404':
+                    riValues=riValues_230404
+                if prep=='230327':
+                    riValues=riValues_230327
+                if prep=='230323':
+                    riValues=riValues_230323
                 if prep=='220114':
-                    riValues=riValues_220114
+                    riValues=riValues_230114
                 if prep=='221216':
                     riValues=riValues_221216
                 if prep=='221208':
-                    riValues=riValues_2211208
+                    riValues=riValues_221208
                 if prep=='221201':
                     riValues=riValues_221201
                 if prep=='221117':
