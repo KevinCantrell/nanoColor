@@ -127,7 +127,7 @@ for filename in filestoprocess:
     dfSpectrum['Absorbance'] = dfSpectrum.iloc[:, 8]
 
     # truncates data to region of interest (the plasmonic peak region) based on wavelength
-    rangeBool = (dfSpectrum['Wavelength'] >= 500) & (dfSpectrum['Wavelength'] <= 600)
+    rangeBool = (dfSpectrum['Wavelength'] >= 500) & (dfSpectrum['Wavelength'] <= 800)
     # This takes the x data from dfSpectrum and makes a Boolean array with values "true" between 500 and 600 and "false" everywhere else
 
     # returns full row of data for row where absorbance is a maximum within the wavelength range defined in rangeBool
@@ -135,7 +135,7 @@ for filename in filestoprocess:
 
     # truncates absorbance array to only the upper 25% of absorbance values
     rangeBoolIntens = (dfSpectrum['Absorbance'] >= 0.75 * maxVals['Absorbance']) & (dfSpectrum['Wavelength'] >= 500) & (
-                dfSpectrum['Wavelength'] <= 600)
+                dfSpectrum['Wavelength'] <= 800)
     # y = dfSpectrum['Absorbance'][rangeBoolIntens]
     # x = np.array(dfSpectrum['Wavelength'][rangeBoolIntens])
 
